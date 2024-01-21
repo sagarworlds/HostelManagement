@@ -67,15 +67,39 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="AddEditRoom.aspx" />
+    <Content Include="adminDashboard.aspx" />
     <Content Include="css\styles.css" />
     <Content Include="js\datatables-simple-demo.js" />
     <Content Include="js\scripts.js" />
     <Content Include="Login.aspx" />
     <Content Include="passwordreset.aspx" />
     <Content Include="Register.aspx" />
+    <Content Include="RoomList.aspx" />
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AddEditRoom.aspx.cs">
+      <DependentUpon>AddEditRoom.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="AddEditRoom.aspx.designer.cs">
+      <DependentUpon>AddEditRoom.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Admin.Master.cs">
+      <DependentUpon>Admin.Master</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Admin.Master.designer.cs">
+      <DependentUpon>Admin.Master</DependentUpon>
+    </Compile>
+    <Compile Include="adminDashboard.aspx.cs">
+      <DependentUpon>adminDashboard.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="adminDashboard.aspx.designer.cs">
+      <DependentUpon>adminDashboard.aspx</DependentUpon>
+    </Compile>
     <Compile Include="Login.aspx.cs">
       <DependentUpon>Login.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -98,6 +122,13 @@
     <Compile Include="Register.aspx.designer.cs">
       <DependentUpon>Register.aspx</DependentUpon>
     </Compile>
+    <Compile Include="RoomList.aspx.cs">
+      <DependentUpon>RoomList.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="RoomList.aspx.designer.cs">
+      <DependentUpon>RoomList.aspx</DependentUpon>
+    </Compile>
     <Compile Include="Site1.Master.cs">
       <DependentUpon>Site1.Master</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -108,10 +139,13 @@
     <Compile Include="Utility\Config.cs" />
     <Compile Include="Utility\DBAccess.cs" />
     <Compile Include="Utility\PasswordUtility.cs" />
+    <Compile Include="Utility\Room.cs" />
+    <Compile Include="Utility\RoomDB.cs" />
     <Compile Include="Utility\User.cs" />
     <Compile Include="Utility\UserDB.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Admin.Master" />
     <None Include="packages.config" />
     <Content Include="Site1.Master" />
     <None Include="Web.Debug.config">
