@@ -29,7 +29,7 @@ namespace HostelManagement
                 bool isSuccess = false;
                 if (oUserDB.EmailExists(oUser))
                 {
-                    msg = "This email is allready exists. Register with different email Id.";
+                    msg = "This email is already exists. Register with different email Id.";
                 }
                 else
                 {
