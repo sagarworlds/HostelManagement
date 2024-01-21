@@ -15,27 +15,38 @@ namespace HostelManagement
             if (Page.IsValid)
             {
                 var oUser = new User();
+
+
                 oUser.FirstName = inputFirstName.Text;
                 oUser.LastName = inputLastName.Text;
                 oUser.Email = inputEmail.Text;
                 oUser.Password = inputPassword.Text;
                 oUser.UserType = "Student";
                 oUser.MobileNo = "";
+                //check if already email exists
                 var oUserDB = new UserDB();
-                bool isSuccess = oUserDB.AddUser(oUser);
                 string msg = string.Empty;
-                if (isSuccess)
+                bool isSuccess = false;
+                if (oUserDB.EmailExists(oUser))
                 {
-                    msg = "Your registration is successful. Please login";
+                    msg = "This email is allready exists. Register with different email Id.";
                 }
                 else
                 {
-                    msg = "Your registration is not successful. Please try again.";
+                    isSuccess = oUserDB.AddUser(oUser);
+                    if (isSuccess)
+                    {
+                        msg = "Your registration is successful. Please login";
+                    }
+                    else
+                    {
+                        msg = "Your registration is not successful. Please try again.";
+                    }
                 }
+               
                 string script = "<script type='text/javascript'>showModalmsg('" + msg + "');</script>";
                 ClientScript.RegisterStartupScript(this.GetType(), "CallMyFunction", script, false);
             }
-
         }
     }
 }

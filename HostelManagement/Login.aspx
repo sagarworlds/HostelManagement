@@ -1,4 +1,4 @@
-﻿<%@ Page Title="Login" Language="C#" MasterPageFile="~/Site1.Master" AutoEventWireup="true" CodeBehind="Login.aspx.cs" Inherits="HostelManagement.Login"  %>
+﻿<%@ Page Title="Login" Language="C#" MasterPageFile="~/Site1.Master" AutoEventWireup="true" CodeBehind="Login.aspx.cs" Inherits="HostelManagement.Login" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
 </asp:Content>
@@ -12,10 +12,8 @@
                             <h3 class="text-center font-weight-light my-4">Login</h3>
                         </div>
                         <div class="card-body">
-                            <%-- <form>--%>
                             <div class="form-floating mb-3">
-                                <%--<input class="form-control" id="inputEmail" type="email" placeholder="name@example.com" />--%>
-                                <asp:TextBox runat="server" ID="inputEmail" TextMode="Email" placeholder="name@example.com" CssClass="form-control" autocomplete="off"/>
+                                <asp:TextBox runat="server" ID="inputEmail" TextMode="Email" placeholder="name@example.com" CssClass="form-control" autocomplete="off" />
                                 <asp:RequiredFieldValidator ErrorMessage="Required" ControlToValidate="inputEmail" runat="server" CssClass="text-danger" />
                                 <asp:RegularExpressionValidator ID="regexEmail" runat="server"
                                     ControlToValidate="inputEmail"
@@ -26,20 +24,15 @@
                                 <label for="inputEmail">Email address</label>
                             </div>
                             <div class="form-floating mb-3">
-                                <%--<input class="form-control" id="inputPassword" type="password" placeholder="Password" />--%>
                                 <asp:TextBox runat="server" ID="inputPassword" TextMode="Password" placeholder="Password" CssClass="form-control" autocomplete="off" />
                                 <asp:RequiredFieldValidator ErrorMessage="Required" ControlToValidate="inputPassword" runat="server" CssClass="text-danger" />
                                 <label for="inputPassword">Password</label>
                             </div>
-                            <div class="form-check mb-3">
-                                <input class="form-check-input" id="inputRememberPassword" type="checkbox" value="" />
-                                <label class="form-check-label" for="inputRememberPassword">Remember Password</label>
-                            </div>
+                           
                             <div class="d-flex align-items-center justify-content-between mt-4 mb-0">
-                                <a class="small" href="password.html">Forgot Password?</a>
-                                <a class="btn btn-primary" href="index.html">Login</a>
+                                <a class="small" href="passwordreset.aspx">Forgot Password?</a>
+                                <asp:Button Text="Login" runat="server" ID="btnLogin" CssClass="btn btn-primary" />
                             </div>
-                            <%--    </form>--%>
                         </div>
                         <div class="card-footer text-center py-3">
                             <div class="small"><a href="Register.aspx">Need an account? Sign up!</a></div>

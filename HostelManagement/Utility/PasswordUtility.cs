@@ -8,7 +8,7 @@ namespace HostelManagement
 {
     public class PasswordUtility
     {
-      public  static string HashPassword(string password)
+        public static string HashPassword(string password)
         {
             // Generate a random salt
             byte[] salt;
@@ -29,7 +29,7 @@ namespace HostelManagement
             return hashedPassword;
         }
 
-   public     static bool VerifyPassword(string enteredPassword, string hashedPassword)
+        public static bool VerifyPassword(string enteredPassword, string hashedPassword)
         {
             // Convert the Base64-encoded string back to a byte array
             byte[] hashBytes = Convert.FromBase64String(hashedPassword);

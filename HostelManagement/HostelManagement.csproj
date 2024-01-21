@@ -71,6 +71,7 @@
     <Content Include="js\datatables-simple-demo.js" />
     <Content Include="js\scripts.js" />
     <Content Include="Login.aspx" />
+    <Content Include="passwordreset.aspx" />
     <Content Include="Register.aspx" />
     <Content Include="Web.config" />
   </ItemGroup>
@@ -81,6 +82,13 @@
     </Compile>
     <Compile Include="Login.aspx.designer.cs">
       <DependentUpon>Login.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="passwordreset.aspx.cs">
+      <DependentUpon>passwordreset.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="passwordreset.aspx.designer.cs">
+      <DependentUpon>passwordreset.aspx</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Register.aspx.cs">
