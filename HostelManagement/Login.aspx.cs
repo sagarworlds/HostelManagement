@@ -27,7 +27,20 @@ namespace HostelManagement
 
                 if (user != null)
                 {
-                    msg = "Login Successfull.";
+
+                    Session.Add("UserId", user.Id);
+                    Session.Add("UserType", user.UserType);
+                    Session.Add("Name", user.FirstName + " " + user.LastName);
+
+                    //  msg = "Login Successfull.";
+                    if (user.UserType == "Student")
+                    {
+                        Response.Redirect("~/UserDashboard.aspx");
+                    }
+                    else if (user.UserType == "Admin")
+                    {
+                        Response.Redirect("~/adminDashboard.aspx");
+                    }
                 }
                 else
                 {

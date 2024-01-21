@@ -11,7 +11,7 @@ namespace HostelManagement
 {
 
 
-    public partial class Admin
+    public partial class UserMaster
     {
 
         /// <summary>
