@@ -197,6 +197,36 @@ namespace HostelManagement.Utility
             return oRequestRoom;
         }
 
+        public bool UpdateRoomRequestStatus(RequestRoom oRequestRoom)
+        {
+            bool bresult = false; DBAccess oDBAccess = null;
+            try
+            {
+                oDBAccess = new DBAccess();
+                string UpdateStr = "UPDATE tbl_RequestRoom SET Status =@Status, ApprovedRoomId =@ApprovedRoomId,ModifiedOn=@ModifiedOn,[ModifiedBy]=@ModifiedBy , [ResponseDate]=@ResponseDate WHERE Id = @Id;";
+
+                ArrayList oParameters = new ArrayList();
+                oParameters.Add(new SqlParameter() { ParameterName = "@ApprovedRoomId", Value = oRequestRoom.ApprovedRoomId });
+                oParameters.Add(new SqlParameter() { ParameterName = "@Status", Value = oRequestRoom.Status });
+                oParameters.Add(new SqlParameter() { ParameterName = "@ModifiedOn", Value = oRequestRoom.ModifiedOn });
+                oParameters.Add(new SqlParameter() { ParameterName = "@ModifiedBy", Value = oRequestRoom.ModifiedBy });
+                oParameters.Add(new SqlParameter() { ParameterName = "@ResponseDate", Value = oRequestRoom.ResponseDate });
+                oParameters.Add(new SqlParameter() { ParameterName = "@Id", Value = oRequestRoom.Id });
+
+                oDBAccess.lfnUpdateData(UpdateStr, oParameters);
+                bresult = true;
+            }
+            catch (Exception ex)
+            {
+                //
+            }
+            finally
+            {
+                if (oDBAccess != null && oDBAccess.isConnectionOpen()) oDBAccess.CloseDB();
+            }
+            return bresult;
+
+        }
 
     }
 }

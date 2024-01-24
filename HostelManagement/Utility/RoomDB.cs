@@ -73,6 +73,35 @@ namespace HostelManagement
 
         }
 
+        public bool UpdateRoomAvailablity(Room oRoom)
+        {
+            bool bresult = false; DBAccess oDBAccess = null;
+            try
+            {
+                oDBAccess = new DBAccess();
+                string UpdateStr = "UPDATE tbl_Room SET Availability=@Availability,ModifiedBy=@ModifiedBy,ModifiedOn=@ModifiedOn Where Id=@Id";
+
+                ArrayList oParameters = new ArrayList();
+                oParameters.Add(new SqlParameter() { ParameterName = "@Availability", Value = oRoom.Availability });
+                oParameters.Add(new SqlParameter() { ParameterName = "@ModifiedBy", Value = oRoom.ModifiedBy });
+                oParameters.Add(new SqlParameter() { ParameterName = "@ModifiedOn", Value = oRoom.ModifiedOn });
+                oParameters.Add(new SqlParameter() { ParameterName = "@Id", Value = oRoom.Id });
+
+                oDBAccess.lfnUpdateData(UpdateStr, oParameters);
+                bresult = true;
+            }
+            catch (Exception ex)
+            {
+                //
+            }
+            finally
+            {
+                if (oDBAccess != null && oDBAccess.isConnectionOpen()) oDBAccess.CloseDB();
+            }
+            return bresult;
+
+        }
+
         public bool DeleteRoom(int Id)
         {
             bool bresult = false;
@@ -163,6 +192,41 @@ namespace HostelManagement
                 if (oDBAccess != null && oDBAccess.isConnectionOpen()) oDBAccess.CloseDB();
             }
             return oRoom;
+        }
+
+
+        public List<Room> GetAvaialbleRoomList()
+        {
+            DBAccess oDBAccess = null;
+            bool oResult = false;
+            List<Room> oRoomList = new List<Room>();
+            try
+            {
+                oDBAccess = new DBAccess();
+                string sql = "SELECT * FROM tbl_Room where Availability=1";
+
+                var oDataTable = oDBAccess.lfnGetDataTable(sql);
+
+                for (int i = 0; i < oDataTable.Rows.Count; i++)
+                {
+                    var row = oDataTable.Rows[i];
+                    var oRoom = new Room();
+                    oRoom.Id = Convert.ToInt32(row["Id"]);
+                    oRoom.RoomName = Convert.ToString(row["RoomName"]);
+                    //oRoom.Rent = Convert.ToInt32(row["Rent"]);
+                    //oRoom.Description = Convert.ToString(row["Description"]);
+                    oRoomList.Add(oRoom);
+                }
+                oResult = oDataTable.Rows.Count > 0;
+            }
+            catch (Exception ex)
+            {
+            }
+            finally
+            {
+                if (oDBAccess != null && oDBAccess.isConnectionOpen()) oDBAccess.CloseDB();
+            }
+            return oRoomList;
         }
 
 

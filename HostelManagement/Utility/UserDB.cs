@@ -52,7 +52,7 @@ namespace HostelManagement
             try
             {
                 oDBAccess = new DBAccess();
-                string sql = "SELECT  [Email],[Password],[UserType],[FirstName],[LastName],[MobileNo],[CreatedOn],[ModifiedOn] FROM [dbo].[tbl_User] " +
+                string sql = "SELECT Id, [Email],[Password],[UserType],[FirstName],[LastName],[MobileNo],[CreatedOn],[ModifiedOn] FROM [dbo].[tbl_User] " +
                     "WHERE Email=@Email";
 
                 ArrayList oParameters = new ArrayList();
@@ -65,6 +65,7 @@ namespace HostelManagement
                     if (PasswordUtility.VerifyPassword(oUser.Password, hashedPassword))
                     {
                         user = new User();
+                        user.Id = Convert.ToInt32(row["Id"]);
                         user.Email = Convert.ToString(row["Email"]);
                         user.UserType = Convert.ToString(row["UserType"]);
                         user.UserType = Convert.ToString(row["UserType"]);

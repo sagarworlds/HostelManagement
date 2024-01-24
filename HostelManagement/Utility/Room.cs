@@ -14,5 +14,8 @@ namespace HostelManagement
         public int ModifiedBy { get; set; }
         public DateTime CreatedOn { get; set; }=DateTime.Now;
         public DateTime ModifiedOn { get; set; } = DateTime.Now;
+        public bool Availability { get; set; }
+
+        
     }
 }
