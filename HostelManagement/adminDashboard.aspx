@@ -9,7 +9,6 @@
             <%-- <ol class="breadcrumb mb-4">
                 <li class="breadcrumb-item active">Room List</li>
             </ol>--%>
-        </div>
 
         <asp:GridView ID="gvRoomsRequest" DataKeyNames="Id" runat="server" AutoGenerateColumns="false"
             CssClass="table table-bordered " ShowFooter="false" HeaderStyle-Font-Bold="true" OnRowCommand="gvRoomsRequest_RowCommand">
@@ -33,7 +32,7 @@
 
                 <asp:TemplateField HeaderText="Action">
                     <ItemTemplate>
-                       <asp:HyperLink Text="Approve" NavigateUrl='<%# "ApproveRoomRequest.aspx?Id=" + Eval("Id") %>' runat="server" Style="display:inline-block">
+                       <asp:HyperLink Text="Take Action" NavigateUrl='<%# "ApproveRoomRequest.aspx?Id=" + Eval("Id") %>' runat="server" Style="display:inline-block">
                             </asp:HyperLink>
                     </ItemTemplate>
                 </asp:TemplateField>

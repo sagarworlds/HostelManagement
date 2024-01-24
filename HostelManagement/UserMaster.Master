@@ -35,7 +35,7 @@
                         <li>
                             <hr class="dropdown-divider" />
                         </li>--%>
-                        <li><a class="dropdown-item" href="#!">Logout</a></li>
+                        <li><asp:LinkButton Text="Logout" runat="server" ID="lnkLogout" OnClick="lnkLogout_Click" CssClass="dropdown-item" /></li>
                     </ul>
                 </li>
             </ul>
