@@ -58,12 +58,22 @@
                                 <div class="sb-nav-link-icon"><span class="material-symbols-outlined">bed</span></div>
                                 Rooms
                             </a>
+                            <a class="nav-link" href="AdminList.aspx?UserType=Admin">
+                                <div class="sb-nav-link-icon"><span class="material-symbols-outlined">shield_person</span></div>
+                                Admins
+                            </a>
+                            <a class="nav-link" href="AdminList.aspx?UserType=Student">
+                                <div class="sb-nav-link-icon">
+                                    <span class="material-symbols-outlined">group
+                                    </span>
+                                </div>
+                                Users
+                            </a>
                         </div>
                     </div>
                     <div class="sb-sidenav-footer">
                         <div class="small">Logged in as:</div>
                         <asp:Label runat="server" ID="lblLoggedInUser" />
-
                     </div>
                 </nav>
             </div>

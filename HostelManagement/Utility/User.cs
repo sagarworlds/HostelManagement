@@ -16,7 +16,7 @@ namespace HostelManagement
         public string MobileNo { get; set; }
         public DateTime CreatedOn { get; set; } = DateTime.Now;
         public DateTime ModifiedOn { get; set; } = DateTime.Now;
-
+        public string UserName { get; set; }
 
     }
 }

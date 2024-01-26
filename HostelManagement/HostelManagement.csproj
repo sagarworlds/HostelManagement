@@ -67,8 +67,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="AddEditAdmin.aspx" />
     <Content Include="AddEditRoom.aspx" />
     <Content Include="adminDashboard.aspx" />
+    <Content Include="AdminList.aspx" />
     <Content Include="ApproveRoomRequest.aspx" />
     <Content Include="css\styles.css" />
     <Content Include="js\datatables-simple-demo.js" />
@@ -81,6 +83,13 @@
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AddEditAdmin.aspx.cs">
+      <DependentUpon>AddEditAdmin.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="AddEditAdmin.aspx.designer.cs">
+      <DependentUpon>AddEditAdmin.aspx</DependentUpon>
+    </Compile>
     <Compile Include="AddEditRoom.aspx.cs">
       <DependentUpon>AddEditRoom.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -101,6 +110,13 @@
     </Compile>
     <Compile Include="adminDashboard.aspx.designer.cs">
       <DependentUpon>adminDashboard.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="AdminList.aspx.cs">
+      <DependentUpon>AdminList.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="AdminList.aspx.designer.cs">
+      <DependentUpon>AdminList.aspx</DependentUpon>
     </Compile>
     <Compile Include="ApproveRoomRequest.aspx.cs">
       <DependentUpon>ApproveRoomRequest.aspx</DependentUpon>
