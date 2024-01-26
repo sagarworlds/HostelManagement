@@ -39,17 +39,6 @@ namespace HostelManagement
         }
        
 
-        protected void gvRoomsRequest_RowDeleting(object sender, GridViewDeleteEventArgs e)
-        {
-            // Retrieve the index of the row being deleted
-            int rowIndex = e.RowIndex;
-
-            // Access the data key of the row to get the record ID
-            int Id = Convert.ToInt32(gvRoomsRequest.DataKeys[rowIndex]["Id"]);
-
-            var oRoomDB = new RoomDB();
-            oRoomDB.DeleteRoom(Id);
-            BindGrid();
-        }
+       
     }
 }

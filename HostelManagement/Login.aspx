@@ -30,7 +30,7 @@
                             </div>
                            
                             <div class="d-flex align-items-center justify-content-between mt-4 mb-0">
-                                <a class="small" href="passwordreset.aspx">Forgot Password?</a>
+                                <a class="small" href="passwordreset.aspx" style="visibility:hidden">Forgot Password?</a>
                                 <asp:Button Text="Login" runat="server" ID="btnLogin" CssClass="btn btn-primary" />
                             </div>
                         </div>
