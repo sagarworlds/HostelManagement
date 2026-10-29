@@ -202,9 +202,12 @@
     <Compile Include="Utility\AccessGuard.cs" />
     <Compile Include="Utility\ClientMessage.cs" />
     <Compile Include="Utility\DBAccess.cs" />
+    <Compile Include="Utility\DashboardDB.cs" />
+    <Compile Include="Utility\DashboardSummary.cs" />
     <Compile Include="Utility\DataAccessException.cs" />
     <Compile Include="Utility\FileLogger.cs" />
     <Compile Include="Utility\GridViewExtensions.cs" />
+    <Compile Include="Utility\IDashboardRepository.cs" />
     <Compile Include="Utility\ILogger.cs" />
     <Compile Include="Utility\IRequestRoomRepository.cs" />
     <Compile Include="Utility\IRoomRepository.cs" />
@@ -214,6 +217,7 @@
     <Compile Include="Utility\PasswordUtility.cs" />
     <Compile Include="Utility\RepositoryBase.cs" />
     <Compile Include="Utility\RequestStatus.cs" />
+    <Compile Include="Utility\StatTile.cs" />
     <Compile Include="Utility\TemporaryPassword.cs" />
     <Compile Include="Utility\RequestRoom.cs" />
     <Compile Include="Utility\RequestRoomDB.cs" />

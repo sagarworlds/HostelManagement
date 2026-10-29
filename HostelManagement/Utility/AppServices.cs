@@ -24,6 +24,11 @@ namespace HostelManagement
             return new RoomDB(Logger());
         }
 
+        public static IDashboardRepository Dashboard()
+        {
+            return new DashboardDB(Logger());
+        }
+
         public static IRequestRoomRepository Requests()
         {
             return new RequestRoomDB(Logger());

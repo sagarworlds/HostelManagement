@@ -5,7 +5,27 @@
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
     <main>
         <div class="container-fluid px-4">
-            <h1 class="mt-4">Request List</h1>
+            <h1 class="mt-4">Dashboard</h1>
+            <div class="row mt-3">
+                <asp:Repeater runat="server" ID="rptStats">
+                    <ItemTemplate>
+                        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
+                            <div class='<%# "card h-100 " + Eval("CssClass") %>'>
+                                <div class="card-body">
+                                    <div class="fs-2 fw-bold"><%# Eval("Value") %></div>
+                                    <div><%# HttpUtility.HtmlEncode(Convert.ToString(Eval("Title"))) %></div>
+                                </div>
+                                <asp:PlaceHolder runat="server" Visible='<%# !string.IsNullOrEmpty(Convert.ToString(Eval("Url"))) %>'>
+                                    <div class="card-footer small">
+                                        <a class="text-reset stretched-link" href='<%# Eval("Url") %>'>View details</a>
+                                    </div>
+                                </asp:PlaceHolder>
+                            </div>
+                        </div>
+                    </ItemTemplate>
+                </asp:Repeater>
+            </div>
+            <h2 class="h4">Room requests</h2>
             <%-- <ol class="breadcrumb mb-4">
                 <li class="breadcrumb-item active">Room List</li>
             </ol>--%>
