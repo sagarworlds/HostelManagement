@@ -27,6 +27,7 @@ namespace HostelManagement
             // Students register themselves, so only the admin list offers an "Add" button.
             bool isStudentList = UserType == UserTypes.Student;
             title.InnerText = isStudentList ? "User List" : "Admin List";
+            Title = isStudentList ? "Users" : "Admins";
             hlAddnew.Visible = !isStudentList;
             BindGrid();
         }

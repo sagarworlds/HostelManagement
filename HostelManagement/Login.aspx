@@ -21,12 +21,12 @@
                                     ErrorMessage="Please enter a valid email address."
                                     Display="Dynamic"
                                     CssClass="text-danger" />
-                                <label for="inputEmail">Email address</label>
+                                <label for="<%= inputEmail.ClientID %>">Email address</label>
                             </div>
                             <div class="form-floating mb-3">
                                 <asp:TextBox runat="server" ID="inputPassword" TextMode="Password" placeholder="Password" CssClass="form-control" autocomplete="off" />
                                 <asp:RequiredFieldValidator ErrorMessage="Required" ControlToValidate="inputPassword" runat="server" CssClass="text-danger" />
-                                <label for="inputPassword">Password</label>
+                                <label for="<%= inputPassword.ClientID %>">Password</label>
                             </div>
                            
                             <div class="d-flex align-items-center justify-content-between mt-4 mb-0">

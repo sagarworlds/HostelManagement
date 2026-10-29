@@ -25,6 +25,12 @@ window.addEventListener('DOMContentLoaded', event => {
             columns: unsortable.map(index => ({ select: index, sortable: false }))
         });
 
+        // The library's search box has only a placeholder, which screen readers do not treat as a name.
+        const searchBox = dataTable.wrapperDOM.querySelector('input.datatable-input');
+        if (searchBox) {
+            searchBox.setAttribute('aria-label', 'Search this list');
+        }
+
         // By default the library treats a multi-word search as "any word", so "Room 07" would match every room.
         // multiSearch requires every query to match, so searching each word separately gives "all words".
         // This listener runs first (capture phase) and stops the event so the library's own handler does not

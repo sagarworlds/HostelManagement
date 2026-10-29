@@ -54,6 +54,7 @@ const check = (name, ok, detail) => { console.log((ok ? 'PASS ' : 'FAIL ') + nam
   const visibleRows = () => page1.locator('#t1 tbody tr').count();
   check('first page shows 10 of 25 rows', await visibleRows() === 10, 'rows=' + await visibleRows());
   check('pagination rendered', await page1.locator('.datatable-pagination').count() >= 1);
+  check('search box has an accessible name', await page1.locator('.datatable-input').getAttribute('aria-label') === 'Search this list');
 
   await page1.locator('.datatable-input').pressSequentially('Room 07');
   await page1.waitForFunction(() => document.querySelectorAll('#t1 tbody tr').length === 1, null, { timeout: 3000 }).catch(() => {});

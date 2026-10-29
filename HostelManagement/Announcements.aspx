@@ -50,7 +50,7 @@
                     </asp:TemplateField>
                     <asp:TemplateField HeaderText="Action">
                         <ItemTemplate>
-                            <asp:LinkButton runat="server" CommandName="Delete" Text="Delete" ToolTip="Delete"
+                            <asp:LinkButton runat="server" CommandName="Delete" Text="Delete" ToolTip="Delete" CausesValidation="false"
                                 OnClientClick="return confirm('Remove this announcement?');">
                                 <span class="material-symbols-outlined">delete</span>
                             </asp:LinkButton>
