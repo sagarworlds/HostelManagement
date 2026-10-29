@@ -25,6 +25,10 @@
                     <asp:Label runat="server" ID="lblUserName" />
                     </p>
                     <p>
+                        Preferred Room:
+                    <asp:Label runat="server" ID="lblPreferredRoom" />
+                    </p>
+                    <p>
                         Available Room:
                     <asp:DropDownList runat="server" ID="ddlAvailableRooms" DataValueField="Id" DataTextField="RoomName" />
                     <asp:RequiredFieldValidator runat="server" ControlToValidate="ddlAvailableRooms" InitialValue="0"

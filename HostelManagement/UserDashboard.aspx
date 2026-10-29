@@ -12,6 +12,7 @@
             </ol>--%>
         </div>
         <div class="col-md-10 d-flex justify-content-end">
+            <a class="btn btn-outline-primary me-2" href="AvailableRooms.aspx">Browse available rooms</a>
             <asp:Button Text="Add new Request" runat="server" ID="btnAddNewRequest" CssClass="btn btn-primary"/>
         </div>
         <div class="row justify-content-center mt-3 ms-2 col-md-10">
@@ -32,6 +33,11 @@
                     <asp:TemplateField HeaderText="Request Status">
                         <ItemTemplate>
                             <asp:Label ID="lblLastName" runat="server" Text='<%#Eval("Status") %>' />
+                        </ItemTemplate>
+                    </asp:TemplateField>
+                    <asp:TemplateField HeaderText="Preferred Room">
+                        <ItemTemplate>
+                            <asp:Label ID="lblPreferredRoom" runat="server" Text='<%# HttpUtility.HtmlEncode(Convert.ToString(Eval("PreferredRoomName"))) %>' />
                         </ItemTemplate>
                     </asp:TemplateField>
                     <asp:TemplateField HeaderText="Alloted Room">

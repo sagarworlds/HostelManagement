@@ -1,5 +1,6 @@
-﻿using HostelManagement.Utility;
+using HostelManagement.Utility;
 using System;
+using System.Web.UI.WebControls;
 
 namespace HostelManagement
 {
@@ -9,13 +10,28 @@ namespace HostelManagement
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            if (!IsPostBack)
-                BindGrid();
+            if (IsPostBack)
+                return;
+
+            ddlStatusFilter.Items.Add(new ListItem("All requests", string.Empty));
+            foreach (string status in RequestStatus.All)
+                ddlStatusFilter.Items.Add(new ListItem(status, status));
+
+            BindGrid();
+        }
+
+        protected void ddlStatusFilter_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            BindGrid();
         }
 
         private void BindGrid()
         {
-            gvRoomsRequest.DataSource = _requests.GetRoomRequestList();
+            // The selection arrives from the browser, so only a status the application stores is used as a filter.
+            string selected = ddlStatusFilter.SelectedValue;
+            string status = RequestStatus.IsKnown(selected) ? selected : null;
+
+            gvRoomsRequest.DataSource = _requests.GetRoomRequestList(status);
             gvRoomsRequest.DataBind();
         }
     }

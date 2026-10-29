@@ -19,8 +19,8 @@ namespace HostelManagement.Utility
             // The "no active request yet" test is part of the insert, and UPDLOCK/HOLDLOCK keep the range locked, so
             // two clicks (or two browser tabs) at the same moment cannot both create a request.
             const string sql =
-                "INSERT INTO dbo.tbl_RequestRoom (UserId, Status, CreatedOn, RequestDate) " +
-                "SELECT @UserId, @Pending, @CreatedOn, @RequestDate " +
+                "INSERT INTO dbo.tbl_RequestRoom (UserId, Status, CreatedOn, RequestDate, PreferredRoomId) " +
+                "SELECT @UserId, @Pending, @CreatedOn, @RequestDate, @PreferredRoomId " +
                 "WHERE NOT EXISTS (SELECT 1 FROM dbo.tbl_RequestRoom WITH (UPDLOCK, HOLDLOCK) " +
                 "                  WHERE UserId = @UserId AND Status IN (@Pending, @Approved));";
 
@@ -33,7 +33,8 @@ namespace HostelManagement.Utility
                         Param("@Pending", RequestStatus.Pending),
                         Param("@Approved", RequestStatus.Approved),
                         Param("@CreatedOn", request.CreatedOn),
-                        Param("@RequestDate", request.RequestDate)));
+                        Param("@RequestDate", request.RequestDate),
+                        Param("@PreferredRoomId", SqlDbType.Int, request.PreferredRoomId > 0 ? (object)request.PreferredRoomId : null)));
 
                     return rows == 1
                         ? OperationResult.Ok()
@@ -42,9 +43,9 @@ namespace HostelManagement.Utility
             }
             catch (SqlException ex)
             {
-                // A stale session for an account that has since been deleted.
+                // Either the account was deleted while the session was open, or the room asked for no longer exists.
                 if (IsForeignKeyViolation(ex))
-                    return OperationResult.Fail("Your account could not be found. Please sign in again.");
+                    return OperationResult.Fail("Your request could not be saved because your account or the selected room no longer exists.");
 
                 return FailureResult("add room request for user " + request.UserId, ex);
             }
@@ -202,8 +203,10 @@ namespace HostelManagement.Utility
         public List<RequestRoom> GetRoomRequestListByUserId(int userId)
         {
             const string sql =
-                "SELECT RR.Id, RR.Status, RR.RequestDate, R.RoomName " +
-                "FROM dbo.tbl_RequestRoom RR LEFT JOIN dbo.tbl_Room R ON R.Id = RR.ApprovedRoomId " +
+                "SELECT RR.Id, RR.Status, RR.RequestDate, R.RoomName, PR.RoomName AS PreferredRoomName " +
+                "FROM dbo.tbl_RequestRoom RR " +
+                "LEFT JOIN dbo.tbl_Room R ON R.Id = RR.ApprovedRoomId " +
+                "LEFT JOIN dbo.tbl_Room PR ON PR.Id = RR.PreferredRoomId " +
                 "WHERE RR.UserId = @UserId ORDER BY RR.Id DESC;";
 
             try
@@ -220,19 +223,26 @@ namespace HostelManagement.Utility
             }
         }
 
-        public List<RequestRoom> GetRoomRequestList()
+        public List<RequestRoom> GetRoomRequestList(string status)
         {
-            // Requests waiting for a decision come first, then everything else newest first.
+            // Requests waiting for a decision come first, then everything else newest first. A null status means "all".
             const string sql =
-                "SELECT RR.Id, RR.Status, RR.RequestDate, R.RoomName " +
-                "FROM dbo.tbl_RequestRoom RR LEFT JOIN dbo.tbl_Room R ON R.Id = RR.ApprovedRoomId " +
+                "SELECT RR.Id, RR.Status, RR.RequestDate, R.RoomName, PR.RoomName AS PreferredRoomName, " +
+                "       U.FirstName + ' ' + U.LastName AS UserName " +
+                "FROM dbo.tbl_RequestRoom RR " +
+                "INNER JOIN dbo.tbl_User U ON U.Id = RR.UserId " +
+                "LEFT JOIN dbo.tbl_Room R ON R.Id = RR.ApprovedRoomId " +
+                "LEFT JOIN dbo.tbl_Room PR ON PR.Id = RR.PreferredRoomId " +
+                "WHERE (@Status IS NULL OR RR.Status = @Status) " +
                 "ORDER BY CASE WHEN RR.Status = @Pending THEN 0 ELSE 1 END, RR.Id DESC;";
 
             try
             {
                 using (var db = new DBAccess())
                 {
-                    DataTable table = db.lfnGetDataTable(sql, Params(Param("@Pending", RequestStatus.Pending)));
+                    DataTable table = db.lfnGetDataTable(sql, Params(
+                        Param("@Status", SqlDbType.NVarChar, string.IsNullOrEmpty(status) ? null : status),
+                        Param("@Pending", RequestStatus.Pending)));
                     return MapRequests(table);
                 }
             }
@@ -245,10 +255,12 @@ namespace HostelManagement.Utility
         public RequestRoom GetRoomRequestById(int id)
         {
             const string sql =
-                "SELECT RR.Id, RR.Status, RR.RequestDate, R.RoomName, U.FirstName + ' ' + U.LastName AS UserName " +
+                "SELECT RR.Id, RR.Status, RR.RequestDate, RR.PreferredRoomId, R.RoomName, PR.RoomName AS PreferredRoomName, " +
+                "       U.FirstName + ' ' + U.LastName AS UserName " +
                 "FROM dbo.tbl_RequestRoom RR " +
                 "INNER JOIN dbo.tbl_User U ON U.Id = RR.UserId " +
                 "LEFT JOIN dbo.tbl_Room R ON R.Id = RR.ApprovedRoomId " +
+                "LEFT JOIN dbo.tbl_Room PR ON PR.Id = RR.PreferredRoomId " +
                 "WHERE RR.Id = @Id;";
 
             try
@@ -259,9 +271,7 @@ namespace HostelManagement.Utility
                     if (table.Rows.Count == 0)
                         return null;
 
-                    RequestRoom request = MapRequest(table.Rows[0]);
-                    request.UserName = Convert.ToString(table.Rows[0]["UserName"]);
-                    return request;
+                    return MapRequest(table.Rows[0]);
                 }
             }
             catch (SqlException ex)
@@ -281,13 +291,23 @@ namespace HostelManagement.Utility
 
         private static RequestRoom MapRequest(DataRow row)
         {
-            return new RequestRoom
+            var request = new RequestRoom
             {
                 Id = Convert.ToInt32(row["Id"]),
                 Status = Convert.ToString(row["Status"]),
                 RequestDate = Convert.ToDateTime(row["RequestDate"]),
-                RoomName = Convert.ToString(row["RoomName"])
+                RoomName = Convert.ToString(row["RoomName"]),
+                PreferredRoomName = Convert.ToString(row["PreferredRoomName"])
             };
+
+            // Not every query selects these, so read them only when present.
+            DataColumnCollection columns = row.Table.Columns;
+            if (columns.Contains("PreferredRoomId") && row["PreferredRoomId"] != DBNull.Value)
+                request.PreferredRoomId = Convert.ToInt32(row["PreferredRoomId"]);
+            if (columns.Contains("UserName"))
+                request.UserName = Convert.ToString(row["UserName"]);
+
+            return request;
         }
     }
 }

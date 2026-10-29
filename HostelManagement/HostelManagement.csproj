@@ -70,6 +70,7 @@
     <Content Include="AddEditAdmin.aspx" />
     <Content Include="AddEditRoom.aspx" />
     <Content Include="adminDashboard.aspx" />
+    <Content Include="AvailableRooms.aspx" />
     <Content Include="AdminList.aspx" />
     <Content Include="ApproveRoomRequest.aspx" />
     <Content Include="css\styles.css" />
@@ -131,6 +132,13 @@
     </Compile>
     <Compile Include="ApproveRoomRequest.aspx.designer.cs">
       <DependentUpon>ApproveRoomRequest.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="AvailableRooms.aspx.cs">
+      <DependentUpon>AvailableRooms.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="AvailableRooms.aspx.designer.cs">
+      <DependentUpon>AvailableRooms.aspx</DependentUpon>
     </Compile>
     <Compile Include="Login.aspx.cs">
       <DependentUpon>Login.aspx</DependentUpon>

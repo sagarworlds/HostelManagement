@@ -13,8 +13,8 @@ namespace HostelManagement.Utility
     public interface IRequestRoomRepository
     {
         /// <summary>
-        /// Creates a Pending request. A student may hold one pending request or one allocated room at a time;
-        /// otherwise the result is a failure.
+        /// Creates a Pending request, optionally for a preferred room (<c>PreferredRoomId</c> greater than 0). A
+        /// student may hold one pending request or one allocated room at a time; otherwise the result is a failure.
         /// </summary>
         OperationResult AddRoomRequest(RequestRoom request);
 
@@ -41,11 +41,12 @@ namespace HostelManagement.Utility
         /// <exception cref="DataAccessException">The database failed.</exception>
         List<RequestRoom> GetRoomRequestListByUserId(int userId);
 
-        /// <summary>All requests, Pending ones first, then newest first.</summary>
+        /// <summary>Requests with the student's name, Pending ones first, then newest first.</summary>
+        /// <param name="status">A value from <see cref="RequestStatus"/> to show only that status; null for all requests.</param>
         /// <exception cref="DataAccessException">The database failed.</exception>
-        List<RequestRoom> GetRoomRequestList();
+        List<RequestRoom> GetRoomRequestList(string status);
 
-        /// <returns>The request including the student's name, or null when it does not exist.</returns>
+        /// <returns>The request including the student's name and preferred room, or null when it does not exist.</returns>
         /// <exception cref="DataAccessException">The database failed.</exception>
         RequestRoom GetRoomRequestById(int id);
     }

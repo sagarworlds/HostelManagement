@@ -46,7 +46,28 @@ namespace HostelManagement
             lblRequestNo.Text = Convert.ToString(request.Id);
             lblStatus.Text = Server.HtmlEncode(request.Status);
             lblUserName.Text = Server.HtmlEncode(request.UserName);
-            BindAvailableRooms();
+
+            List<Room> availableRooms = BindAvailableRooms();
+            ShowPreferredRoom(request, availableRooms);
+        }
+
+        /// <summary>
+        /// Shows the room the student asked for and, when it is still free, selects it so approving is one click.
+        /// The administrator can still pick any other room.
+        /// </summary>
+        private void ShowPreferredRoom(RequestRoom request, List<Room> availableRooms)
+        {
+            if (request.PreferredRoomId <= 0)
+            {
+                lblPreferredRoom.Text = "No preference";
+                return;
+            }
+
+            bool stillAvailable = availableRooms.Exists(room => room.Id == request.PreferredRoomId);
+            if (stillAvailable)
+                ddlAvailableRooms.SelectedValue = Convert.ToString(request.PreferredRoomId);
+
+            lblPreferredRoom.Text = Server.HtmlEncode(request.PreferredRoomName) + (stillAvailable ? string.Empty : " (not available)");
         }
 
         private void BtnApprove_Click(object sender, EventArgs e)
@@ -83,7 +104,7 @@ namespace HostelManagement
             BindAvailableRooms();
         }
 
-        private void BindAvailableRooms()
+        private List<Room> BindAvailableRooms()
         {
             List<Room> rooms = _rooms.GetAvailableRooms();
             ddlAvailableRooms.DataSource = rooms;
@@ -92,6 +113,8 @@ namespace HostelManagement
 
             // With no free room the request can only be rejected.
             btnApprove.Enabled = rooms.Count > 0;
+
+            return rooms;
         }
     }
 }

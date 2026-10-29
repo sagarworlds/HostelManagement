@@ -81,11 +81,23 @@ namespace HostelManagement
             {
                 using (var db = new DBAccess())
                 {
+                    db.BeginTransaction();
+
+                    // PreferredRoomId only records what a student asked for. Its foreign key does not cascade (SQL Server
+                    // allows only one cascading key to the room table), so clear it here. If the delete below is refused,
+                    // leaving the using block rolls this back.
+                    db.lfnExecuteNonQuery(
+                        "UPDATE dbo.tbl_RequestRoom SET PreferredRoomId = NULL WHERE PreferredRoomId = @Id;",
+                        Params(Param("@Id", id)));
+
                     int rows = db.lfnExecuteNonQuery(deleteSql, Params(
                         Param("@Id", id),
                         Param("@Approved", RequestStatus.Approved)));
                     if (rows == 1)
+                    {
+                        db.CommitTransaction();
                         return OperationResult.Ok();
+                    }
 
                     // Nothing was deleted: either the room is gone already or a student holds it.
                     int stillThere = db.lfnExecuteScaler<int>(
