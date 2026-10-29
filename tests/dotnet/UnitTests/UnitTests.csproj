@@ -22,6 +22,9 @@
     <Compile Include="..\..\..\HostelManagement\Utility\RequestStatus.cs" Link="Linked\RequestStatus.cs" />
     <Compile Include="..\..\..\HostelManagement\Utility\OperationResult.cs" Link="Linked\OperationResult.cs" />
     <Compile Include="..\..\..\HostelManagement\Utility\Room.cs" Link="Linked\Room.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\SecureToken.cs" Link="Linked\SecureToken.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\LoginThrottle.cs" Link="Linked\LoginThrottle.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\LoginAttemptPolicy.cs" Link="Linked\LoginAttemptPolicy.cs" />
   </ItemGroup>
 
   <ItemGroup>

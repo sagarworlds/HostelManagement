@@ -1,3 +1,4 @@
+using System;
 using HostelManagement.Utility;
 
 namespace HostelManagement
@@ -9,6 +10,14 @@ namespace HostelManagement
     /// </summary>
     public static class AppServices
     {
+        // Failed sign-ins must be counted across requests, so unlike the repositories this one instance is shared.
+        private static readonly LoginAttemptPolicy SharedLoginAttempts = new LoginAttemptPolicy(() => DateTime.UtcNow);
+
+        public static LoginAttemptPolicy LoginAttempts()
+        {
+            return SharedLoginAttempts;
+        }
+
         public static ILogger Logger()
         {
             return new FileLogger();

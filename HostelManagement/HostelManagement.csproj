@@ -84,6 +84,7 @@
     <Content Include="UserDashboard.aspx" />
     <Content Include="Controls\AlertModal.ascx" />
     <Content Include="connectionStrings.config" Condition="Exists('connectionStrings.config')" />
+    <Content Include="Error.aspx" />
     <Content Include="Global.asax" />
     <Content Include="Web.config" />
   </ItemGroup>
@@ -209,6 +210,9 @@
     <Compile Include="Utility\GridViewExtensions.cs" />
     <Compile Include="Utility\IDashboardRepository.cs" />
     <Compile Include="Utility\ILogger.cs" />
+    <Compile Include="Utility\LoginAttemptPolicy.cs" />
+    <Compile Include="Utility\LoginBinding.cs" />
+    <Compile Include="Utility\LoginThrottle.cs" />
     <Compile Include="Utility\IRequestRoomRepository.cs" />
     <Compile Include="Utility\IRoomRepository.cs" />
     <Compile Include="Utility\IUserRepository.cs" />
@@ -217,6 +221,7 @@
     <Compile Include="Utility\PasswordUtility.cs" />
     <Compile Include="Utility\RepositoryBase.cs" />
     <Compile Include="Utility\RequestStatus.cs" />
+    <Compile Include="Utility\SecureToken.cs" />
     <Compile Include="Utility\StatTile.cs" />
     <Compile Include="Utility\TemporaryPassword.cs" />
     <Compile Include="Utility\RequestRoom.cs" />

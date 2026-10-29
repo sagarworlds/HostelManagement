@@ -61,7 +61,7 @@ namespace HostelManagement
                 byte[] expected;
                 ParseV2(hashedPassword, out iterations, out salt, out expected);
 
-                return FixedTimeEquals(DeriveV2(enteredPassword, salt, iterations), expected);
+                return SecureToken.FixedTimeEquals(DeriveV2(enteredPassword, salt, iterations), expected);
             }
 
             return VerifyLegacy(enteredPassword, hashedPassword);
@@ -126,23 +126,7 @@ namespace HostelManagement
                 actual = pbkdf2.GetBytes(LegacyHashBytes);
             }
 
-            return FixedTimeEquals(actual, expected);
-        }
-
-        /// <summary>
-        /// Compares without stopping at the first difference, so the time taken does not reveal how much of a guess
-        /// was right. (CryptographicOperations.FixedTimeEquals does not exist on .NET Framework.)
-        /// </summary>
-        private static bool FixedTimeEquals(byte[] left, byte[] right)
-        {
-            if (left.Length != right.Length)
-                return false;
-
-            int difference = 0;
-            for (int i = 0; i < left.Length; i++)
-                difference |= left[i] ^ right[i];
-
-            return difference == 0;
+            return SecureToken.FixedTimeEquals(actual, expected);
         }
     }
 }

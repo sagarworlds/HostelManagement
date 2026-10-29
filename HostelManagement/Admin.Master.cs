@@ -22,6 +22,7 @@ namespace HostelManagement
        
         protected void lnkLogout_Click(object sender, EventArgs e)
         {
+            LoginBinding.Clear(Page);
             Session.Abandon();
             Response.Redirect("~/Login.aspx");
 
