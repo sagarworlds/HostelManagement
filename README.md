@@ -62,7 +62,7 @@ The system offers role-based access control with distinct features for Admins an
   * A signed-in session is only trusted together with a second HttpOnly cookie issued at sign-in (defeats session fixation); signed-in pages are never cached; view state is tied to the session.
   * Cookies are HttpOnly and SameSite=Lax; Release builds also require HTTPS cookies and turn off debug and detailed errors. Security headers (`nosniff`, frame options, referrer policy) are set.
   * Everything users type is HTML-encoded where it is displayed; reset-link tokens are stored only as hashes.
-  * Not covered: a Content-Security-Policy and HSTS (both depend on how you deploy), and the rate limits are in memory, so they reset when the application restarts and are per server.
+  * Not covered: a Content-Security-Policy and HSTS (both depend on how you deploy), and the rate limits are in memory, so they reset when the application restarts and are per server. A reset link's token is part of its URL, so your web server's access log will contain it while it is valid (single use, one hour); keep those logs private.
 * **Validation:** Robust client-side (JavaScript/Bootstrap) and server-side (ASP.NET Validators) input validation.
 
 ## 💻 Prerequisites
