@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copy this file to connectionStrings.config (same folder) and set your SQL Server details.
+  connectionStrings.config is git-ignored so credentials are never committed.
+
+  SQL Server login:     Data Source=YOUR_SERVER_NAME;Initial Catalog=HMSDB;User ID=YOUR_USER;Password=YOUR_PASSWORD;
+  Windows authentication: Data Source=YOUR_SERVER_NAME;Initial Catalog=HMSDB;Integrated Security=True;
+-->
+<connectionStrings>
+  <add name="DBConnection"
+       connectionString="Data Source=YOUR_SERVER_NAME;Initial Catalog=HMSDB;User ID=YOUR_USER;Password=YOUR_PASSWORD;"
+       providerName="System.Data.SqlClient" />
+</connectionStrings>

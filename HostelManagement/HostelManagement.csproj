@@ -80,6 +80,7 @@
     <Content Include="Register.aspx" />
     <Content Include="RoomList.aspx" />
     <Content Include="UserDashboard.aspx" />
+    <Content Include="connectionStrings.config" Condition="Exists('connectionStrings.config')" />
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
@@ -187,6 +188,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Admin.Master" />
+    <None Include="connectionStrings.config.example" />
     <None Include="packages.config" />
     <Content Include="Site1.Master" />
     <Content Include="UserMaster.Master" />

@@ -24,11 +24,20 @@ namespace HostelManagement
             return ConfigurationManager.AppSettings[Key];
         }
 
+        /// <summary>
+        /// Connection string named "DBConnection".
+        /// </summary>
+        /// <exception cref="ConfigurationErrorsException">The connection string is missing or empty.</exception>
         public static string MCQBConnectionString
         {
             get
             {
-                return System.Configuration.ConfigurationManager.ConnectionStrings["DBConnection"].ToString();
+                ConnectionStringSettings settings = ConfigurationManager.ConnectionStrings["DBConnection"];
+                if (settings == null || string.IsNullOrWhiteSpace(settings.ConnectionString))
+                    throw new ConfigurationErrorsException("Connection string 'DBConnection' is missing or empty. " +
+                        "Copy HostelManagement/connectionStrings.config.example to connectionStrings.config and set your SQL Server details.");
+
+                return settings.ConnectionString;
             }
         }
 

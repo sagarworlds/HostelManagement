@@ -67,16 +67,17 @@ To run this project locally, you will need:
 
 2. **Database Setup**
    * Open Microsoft SQL Server Management Studio (SSMS).
-   * Create a new database named `HMSDB`.
-   * *(Note: If there are SQL script files provided in the repository, execute them in SSMS to create the necessary tables).*
-   
+   * Run `Database\schema.sql` — it creates the `HMSDB` database and its tables.
+   * Registration only creates students, so create the first administrator: follow the steps at the top of `Database\seed-admin.sql` (it explains how to generate the password hash) and run it.
+   * Already have an `HMSDB` database from an earlier version? Don't run `schema.sql`; run `Database\upgrade-existing-db.sql` instead, which is safe to repeat and ends with diagnostics for data that needs a manual look.
+
 3. **Configure Connection String**
-   * Open `HostelManagement\Web.config`.
-   * Locate the `<connectionStrings>` block.
-   * Update the `Data Source` and credentials to match your local SQL Server instance:
+   * Copy `HostelManagement\connectionStrings.config.example` to `HostelManagement\connectionStrings.config`.
+   * Edit the new file and set the `Data Source` and credentials for your SQL Server instance:
      ```xml
-     <add name="DBConnection" connectionString="Data Source=YOUR_SERVER_NAME;Initial Catalog=HMSDB;User ID=YOUR_USER;Password=YOUR_PASSWORD;" providerName="System.Data.SqlClient;"/>
+     <add name="DBConnection" connectionString="Data Source=YOUR_SERVER_NAME;Initial Catalog=HMSDB;User ID=YOUR_USER;Password=YOUR_PASSWORD;" providerName="System.Data.SqlClient" />
      ```
+   * `connectionStrings.config` is git-ignored, so your credentials are never committed. `Web.config` points to it via `configSource`.
 
 4. **Run the Application**
    * Open `HostelManagement.sln` in Visual Studio.
