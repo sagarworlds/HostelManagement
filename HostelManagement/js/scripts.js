@@ -15,13 +15,20 @@ window.addEventListener('DOMContentLoaded', event => {
         });
     }
 
-    // Attach the onOk function to the "OK" button click event
-    document.getElementById("okButton").addEventListener("click", onOk);
+    // Run onOk whenever the alert is dismissed (OK, close button, Esc or backdrop click). onOk is looked
+    // up at that moment (not captured here) so showModalmsg/overrideOnOk can replace it later.
+    const alertModal = document.getElementById("modal-alert");
+    if (alertModal) {
+        alertModal.addEventListener("hidden.bs.modal", () => onOk());
+    }
 
 });
 
-function showModalmsg(msg) {
+// Shows the shared alert dialog. When redirectUrl is given, closing the dialog navigates there
+// (e.g. to the login page after a successful registration); otherwise the user stays on the page.
+function showModalmsg(msg, redirectUrl) {
     document.getElementById('alert-message').innerText = msg;
+    onOk = redirectUrl ? () => { window.location.href = redirectUrl; } : () => { };
     var modalAlert = new bootstrap.Modal(document.getElementById('modal-alert'), {})
     modalAlert.show();
 }

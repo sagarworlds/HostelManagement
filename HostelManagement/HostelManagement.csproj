@@ -80,6 +80,7 @@
     <Content Include="Register.aspx" />
     <Content Include="RoomList.aspx" />
     <Content Include="UserDashboard.aspx" />
+    <Content Include="Controls\AlertModal.ascx" />
     <Content Include="connectionStrings.config" Condition="Exists('connectionStrings.config')" />
     <Content Include="Global.asax" />
     <Content Include="Web.config" />
