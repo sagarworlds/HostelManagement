@@ -82,6 +82,8 @@ namespace HostelManagement
                 using (var db = new DBAccess())
                 {
                     db.BeginTransaction();
+                    if (!TryLockResource(db, AllocationsLock))
+                        return OperationResult.Fail(BusyMessage);
 
                     // PreferredRoomId only records what a student asked for. Its foreign key does not cascade (SQL Server
                     // allows only one cascading key to the room table), so clear it here. If the delete below is refused,

@@ -4,12 +4,14 @@
     Registration only creates students, so a new installation needs one administrator before anyone
     can manage rooms. No default password is shipped on purpose: generate the hash yourself.
 
-    1. Generate a password hash with PowerShell (same algorithm as PasswordUtility.HashPassword):
+    1. Generate a password hash with PowerShell (same algorithm and format as PasswordUtility.HashPassword;
+       needs .NET Framework 4.7.2 or later, which Windows PowerShell has on any machine that can run the application):
 
+           $iterations = 600000
            $salt = New-Object byte[] 16
            [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($salt)
-           $kdf  = New-Object Security.Cryptography.Rfc2898DeriveBytes('YOUR-PASSWORD-HERE', $salt, 10000)
-           [Convert]::ToBase64String([byte[]]($salt + $kdf.GetBytes(20)))
+           $kdf  = New-Object Security.Cryptography.Rfc2898DeriveBytes('YOUR-PASSWORD-HERE', $salt, $iterations, [Security.Cryptography.HashAlgorithmName]::SHA256)
+           'v2$' + $iterations + '$' + [Convert]::ToBase64String($salt) + '$' + [Convert]::ToBase64String($kdf.GetBytes(32))
 
     2. Paste the output into @PasswordHash below, adjust the other values and run the script.
 */

@@ -2,7 +2,7 @@
     HostelHub - database schema (Microsoft SQL Server)
 
     IMPORTANT: this script was reconstructed from the SQL statements issued by the application
-    (HostelManagement/Utility/*DB.cs). It was NOT exported from a live database, so column sizes and
+    (the *DB.cs files in HostelManagement/Utility). It was NOT exported from a live database, so column sizes and
     constraints are reasonable choices rather than a copy of an existing schema.
 
       * New installation  -> run this script, then seed-admin.sql.

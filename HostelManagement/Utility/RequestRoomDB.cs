@@ -28,6 +28,15 @@ namespace HostelManagement.Utility
             {
                 using (var db = new DBAccess())
                 {
+                    db.BeginTransaction();
+
+                    // A preferred room is a reference to a room row, and deleting a room first clears the references to it
+                    // and then deletes the row. A request created in between would make that delete fail, so asking for a
+                    // specific room queues behind room changes (a row lock cannot do it: the new request's row would be
+                    // locked while waiting for the room, and the delete needs that row, which deadlocks).
+                    if (request.PreferredRoomId > 0 && !TryLockResource(db, AllocationsLock))
+                        return OperationResult.Fail(BusyMessage);
+
                     int rows = db.lfnExecuteNonQuery(sql, Params(
                         Param("@UserId", request.UserId),
                         Param("@Pending", RequestStatus.Pending),
@@ -35,6 +44,7 @@ namespace HostelManagement.Utility
                         Param("@CreatedOn", request.CreatedOn),
                         Param("@RequestDate", request.RequestDate),
                         Param("@PreferredRoomId", SqlDbType.Int, request.PreferredRoomId > 0 ? (object)request.PreferredRoomId : null)));
+                    db.CommitTransaction();
 
                     return rows == 1
                         ? OperationResult.Ok()
@@ -88,6 +98,8 @@ namespace HostelManagement.Utility
                 using (var db = new DBAccess())
                 {
                     db.BeginTransaction();
+                    if (!TryLockResource(db, AllocationsLock))
+                        return OperationResult.Fail(BusyMessage);
 
                     int requestRows = db.lfnExecuteNonQuery(
                         "UPDATE dbo.tbl_RequestRoom SET Status = @Approved, ApprovedRoomId = @RoomId, ModifiedOn = @Now, " +
@@ -162,6 +174,8 @@ namespace HostelManagement.Utility
                 using (var db = new DBAccess())
                 {
                     db.BeginTransaction();
+                    if (!TryLockResource(db, AllocationsLock))
+                        return OperationResult.Fail(BusyMessage);
 
                     int requestRows = db.lfnExecuteNonQuery(
                         "UPDATE dbo.tbl_RequestRoom SET Status = @Vacated, ModifiedOn = @Now, ModifiedBy = @AdminId " +
