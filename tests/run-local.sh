@@ -31,7 +31,7 @@ skip_or_fail() {
 
 # 1. Static checks: need only python3.
 if command -v python3 >/dev/null 2>&1; then
-  for check in check_csproj check_designers check_sql_parameters check_markup; do
+  for check in check_csproj check_designers check_sql_parameters check_markup check_webconfig; do
     run "static: $check" python3 "tests/static/$check.py"
   done
 else
