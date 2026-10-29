@@ -6,7 +6,7 @@
 
     Run it BEFORE deploying a newer version of the application: steps 5 and 6 add columns that the
     current code reads, and sign-in and the request pages fail (and log "schema looks out of date")
-    until they exist.
+    until they exist. Step 7 widens the password column for the new hash format.
 
     Background: earlier versions of the application never set tbl_Room.Availability when a room was
     created, never recorded when a room became free again, and did not stop a room from being
@@ -65,6 +65,20 @@ GO
 IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = N'FK_tbl_RequestRoom_PreferredRoom')
     ALTER TABLE dbo.tbl_RequestRoom ADD CONSTRAINT FK_tbl_RequestRoom_PreferredRoom
         FOREIGN KEY (PreferredRoomId) REFERENCES dbo.tbl_Room (Id);
+GO
+
+/* 7. Password hashes are longer now (79 characters instead of 48). An older database may have a narrower column,
+      in which case new accounts could not be created and old hashes could not be upgraded at sign-in. */
+DECLARE @passwordNullability NVARCHAR(10);
+SELECT @passwordNullability = CASE WHEN is_nullable = 1 THEN N'NULL' ELSE N'NOT NULL' END
+FROM   sys.columns
+WHERE  object_id = OBJECT_ID(N'dbo.tbl_User') AND name = N'Password'
+  AND  max_length <> -1 AND max_length < 512;   -- bytes: fewer than 256 characters
+IF @passwordNullability IS NOT NULL
+BEGIN
+    DECLARE @widenPassword NVARCHAR(200) = N'ALTER TABLE dbo.tbl_User ALTER COLUMN [Password] NVARCHAR(256) ' + @passwordNullability + N';';
+    EXEC sys.sp_executesql @widenPassword;
+END
 GO
 
 /* ---------------------------------------------------------------------------------------------

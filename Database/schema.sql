@@ -21,7 +21,8 @@ GO
 
 /* ---------------------------------------------------------------------------------------------
    tbl_User - administrators and students.
-   Password holds Base64(salt[16] + PBKDF2 hash[20]) produced by PasswordUtility (48 characters).
+   Password holds a self-describing PBKDF2 hash produced by PasswordUtility: "v2$<iterations>$<salt>$<hash>", 79
+   characters today. Hashes written by earlier versions (48 characters) are upgraded when their owner signs in.
    MustChangePassword is set when an administrator resets the password; the user is then held on
    the profile page until they choose a new one.
    --------------------------------------------------------------------------------------------- */
@@ -31,7 +32,7 @@ BEGIN
     (
         Id          INT IDENTITY(1, 1) NOT NULL CONSTRAINT PK_tbl_User PRIMARY KEY,
         Email       NVARCHAR(256)      NOT NULL,
-        [Password]  NVARCHAR(128)      NOT NULL,
+        [Password]  NVARCHAR(256)      NOT NULL,
         UserType    NVARCHAR(20)       NOT NULL,
         FirstName   NVARCHAR(100)      NOT NULL,
         LastName    NVARCHAR(100)      NOT NULL,
