@@ -14,7 +14,7 @@ namespace HostelManagement.UnitTests
         }
     }
 
-    public class LoginThrottleTests
+    public class RateLimiterTests
     {
         private static readonly TimeSpan Window = TimeSpan.FromMinutes(10);
 
@@ -22,97 +22,97 @@ namespace HostelManagement.UnitTests
         public void A_key_may_fail_up_to_the_allowance_and_is_then_blocked()
         {
             var clock = new FakeClock();
-            var throttle = new LoginThrottle(3, Window, () => clock.Now);
+            var limiter = new RateLimiter(3, Window, () => clock.Now);
 
             for (int i = 0; i < 3; i++)
             {
-                Assert.Equal(TimeSpan.Zero, throttle.RetryAfter("alice"));
-                throttle.RecordFailure("alice");
+                Assert.Equal(TimeSpan.Zero, limiter.RetryAfter("alice"));
+                limiter.Record("alice");
             }
 
-            Assert.True(throttle.RetryAfter("alice") > TimeSpan.Zero);
+            Assert.True(limiter.RetryAfter("alice") > TimeSpan.Zero);
         }
 
         [Fact]
         public void The_wait_runs_until_the_oldest_counted_failure_ages_out()
         {
             var clock = new FakeClock();
-            var throttle = new LoginThrottle(3, Window, () => clock.Now);
+            var limiter = new RateLimiter(3, Window, () => clock.Now);
 
-            throttle.RecordFailure("alice");           // t+0
+            limiter.Record("alice");           // t+0
             clock.Advance(TimeSpan.FromMinutes(1));
-            throttle.RecordFailure("alice");           // t+1
+            limiter.Record("alice");           // t+1
             clock.Advance(TimeSpan.FromMinutes(1));
-            throttle.RecordFailure("alice");           // t+2: blocked until the t+0 failure is 10 minutes old
+            limiter.Record("alice");           // t+2: blocked until the t+0 failure is 10 minutes old
 
-            Assert.Equal(TimeSpan.FromMinutes(8), throttle.RetryAfter("alice"));
+            Assert.Equal(TimeSpan.FromMinutes(8), limiter.RetryAfter("alice"));
 
             clock.Advance(TimeSpan.FromMinutes(8));    // t+10
-            Assert.Equal(TimeSpan.Zero, throttle.RetryAfter("alice"));
+            Assert.Equal(TimeSpan.Zero, limiter.RetryAfter("alice"));
         }
 
         [Fact]
         public void Failures_outside_the_window_do_not_count()
         {
             var clock = new FakeClock();
-            var throttle = new LoginThrottle(2, Window, () => clock.Now);
+            var limiter = new RateLimiter(2, Window, () => clock.Now);
 
-            throttle.RecordFailure("alice");
-            throttle.RecordFailure("alice");
-            Assert.True(throttle.RetryAfter("alice") > TimeSpan.Zero);
+            limiter.Record("alice");
+            limiter.Record("alice");
+            Assert.True(limiter.RetryAfter("alice") > TimeSpan.Zero);
 
             clock.Advance(Window + TimeSpan.FromSeconds(1));
-            Assert.Equal(TimeSpan.Zero, throttle.RetryAfter("alice"));
+            Assert.Equal(TimeSpan.Zero, limiter.RetryAfter("alice"));
 
-            throttle.RecordFailure("alice");           // one fresh failure is within the allowance again
-            Assert.Equal(TimeSpan.Zero, throttle.RetryAfter("alice"));
+            limiter.Record("alice");           // one fresh failure is within the allowance again
+            Assert.Equal(TimeSpan.Zero, limiter.RetryAfter("alice"));
         }
 
         [Fact]
         public void Keys_are_independent()
         {
             var clock = new FakeClock();
-            var throttle = new LoginThrottle(1, Window, () => clock.Now);
+            var limiter = new RateLimiter(1, Window, () => clock.Now);
 
-            throttle.RecordFailure("alice");
+            limiter.Record("alice");
 
-            Assert.True(throttle.RetryAfter("alice") > TimeSpan.Zero);
-            Assert.Equal(TimeSpan.Zero, throttle.RetryAfter("bob"));
+            Assert.True(limiter.RetryAfter("alice") > TimeSpan.Zero);
+            Assert.Equal(TimeSpan.Zero, limiter.RetryAfter("bob"));
         }
 
         [Fact]
         public void Reset_forgets_a_key()
         {
             var clock = new FakeClock();
-            var throttle = new LoginThrottle(1, Window, () => clock.Now);
-            throttle.RecordFailure("alice");
+            var limiter = new RateLimiter(1, Window, () => clock.Now);
+            limiter.Record("alice");
 
-            throttle.Reset("alice");
+            limiter.Reset("alice");
 
-            Assert.Equal(TimeSpan.Zero, throttle.RetryAfter("alice"));
+            Assert.Equal(TimeSpan.Zero, limiter.RetryAfter("alice"));
         }
 
         [Fact]
         public void Flooding_with_made_up_keys_does_not_break_anything()
         {
             var clock = new FakeClock();
-            var throttle = new LoginThrottle(3, Window, () => clock.Now);
+            var limiter = new RateLimiter(3, Window, () => clock.Now);
 
             for (int i = 0; i < 30000; i++)
-                throttle.RecordFailure("key-" + i);
+                limiter.Record("key-" + i);
 
             // Tracking stops at its cap, but a key that is already tracked is still limited, and nothing threw.
-            throttle.RecordFailure("key-0");
-            throttle.RecordFailure("key-0");
-            Assert.True(throttle.RetryAfter("key-0") > TimeSpan.Zero);
+            limiter.Record("key-0");
+            limiter.Record("key-0");
+            Assert.True(limiter.RetryAfter("key-0") > TimeSpan.Zero);
         }
 
         [Fact]
         public void Invalid_settings_are_rejected()
         {
-            Assert.Throws<ArgumentOutOfRangeException>(() => new LoginThrottle(0, Window, () => DateTime.UtcNow));
-            Assert.Throws<ArgumentOutOfRangeException>(() => new LoginThrottle(1, TimeSpan.Zero, () => DateTime.UtcNow));
-            Assert.Throws<ArgumentNullException>(() => new LoginThrottle(1, Window, null));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new RateLimiter(0, Window, () => DateTime.UtcNow));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new RateLimiter(1, TimeSpan.Zero, () => DateTime.UtcNow));
+            Assert.Throws<ArgumentNullException>(() => new RateLimiter(1, Window, null));
         }
     }
 

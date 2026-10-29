@@ -5,14 +5,14 @@ import re
 
 from _common import ROOT, UTILITY, finish, read
 
-REPOSITORIES = ["UserDB.cs", "RoomDB.cs", "RequestRoomDB.cs", "DashboardDB.cs"]
+REPOSITORIES = ["UserDB.cs", "RoomDB.cs", "RequestRoomDB.cs", "DashboardDB.cs", "PasswordResetDB.cs"]
 DERIVED_COLUMNS = {"ActiveRequestId", "OccupantName", "UserName", "PreferredRoomName",
                    "TotalRooms", "AvailableRooms", "OccupiedRooms", "PendingRequests", "Students", "Admins"}
 
 
 def schema_columns():
     schema = read(ROOT / "Database" / "schema.sql")
-    return set(re.findall(r"^\s+\[?(\w+)\]?\s+(?:INT|NVARCHAR|BIT|DATETIME)", schema, flags=re.M))
+    return set(re.findall(r"^\s+\[?(\w+)\]?\s+(?:INT|NVARCHAR|VARCHAR|CHAR|BIT|DATETIME)", schema, flags=re.M))
 
 
 def main():
@@ -44,11 +44,11 @@ def main():
             for column in re.findall(r"\b(?:R|RR|U|PR)\.\[?(\w+)\]?", literal):
                 if column not in columns and column not in DERIVED_COLUMNS:
                     problems.append("%s: column '%s' is not defined in Database/schema.sql" % (filename, column))
-            for column in re.findall(r"\b(MustChangePassword|PreferredRoomId|Availability|ApprovedRoomId)\b", literal):
+            for column in re.findall(r"\b(MustChangePassword|PreferredRoomId|Availability|ApprovedRoomId|TokenHash|ExpiresOn|UsedOn)\b", literal):
                 if column not in columns:
                     problems.append("%s: column '%s' is not defined in Database/schema.sql" % (filename, column))
 
-    if checked < 20:
+    if checked < 24:
         problems.append("only %d SQL methods were found; the checker's pattern probably no longer matches the code" % checked)
     finish("SQL parameters and columns (%d methods)" % checked, problems)
 

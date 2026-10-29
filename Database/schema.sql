@@ -104,6 +104,28 @@ BEGIN
 END
 GO
 
+/* ---------------------------------------------------------------------------------------------
+   tbl_PasswordReset - links e-mailed to users who forgot their password.
+   Only the SHA-256 (hex) of a link's random token is stored, so a copy of the database cannot be turned into
+   working links. A link works once (UsedOn) and until ExpiresOn; creating a new link retires older ones.
+   Deleting a user removes their links.
+   --------------------------------------------------------------------------------------------- */
+IF OBJECT_ID(N'dbo.tbl_PasswordReset', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.tbl_PasswordReset
+    (
+        Id        INT IDENTITY(1, 1) NOT NULL CONSTRAINT PK_tbl_PasswordReset PRIMARY KEY,
+        UserId    INT                NOT NULL,
+        TokenHash CHAR(64)           NOT NULL,
+        CreatedOn DATETIME           NOT NULL,
+        ExpiresOn DATETIME           NOT NULL,
+        UsedOn    DATETIME           NULL,
+        CONSTRAINT UQ_tbl_PasswordReset_TokenHash UNIQUE (TokenHash),
+        CONSTRAINT FK_tbl_PasswordReset_User FOREIGN KEY (UserId) REFERENCES dbo.tbl_User (Id) ON DELETE CASCADE
+    );
+END
+GO
+
 /* Supports "does this student already have an active request" and the per-room allocation look-ups. */
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_tbl_RequestRoom_UserId_Status' AND object_id = OBJECT_ID(N'dbo.tbl_RequestRoom'))
     CREATE INDEX IX_tbl_RequestRoom_UserId_Status ON dbo.tbl_RequestRoom (UserId, [Status]);

@@ -6,7 +6,8 @@
 
     Run it BEFORE deploying a newer version of the application: steps 5 and 6 add columns that the
     current code reads, and sign-in and the request pages fail (and log "schema looks out of date")
-    until they exist. Step 7 widens the password column for the new hash format.
+    until they exist. Step 7 widens the password column for the new hash format; step 8 adds the table used by
+    e-mailed password reset.
 
     Background: earlier versions of the application never set tbl_Room.Availability when a room was
     created, never recorded when a room became free again, and did not stop a room from being
@@ -78,6 +79,23 @@ IF @passwordNullability IS NOT NULL
 BEGIN
     DECLARE @widenPassword NVARCHAR(200) = N'ALTER TABLE dbo.tbl_User ALTER COLUMN [Password] NVARCHAR(256) ' + @passwordNullability + N';';
     EXEC sys.sp_executesql @widenPassword;
+END
+GO
+
+/* 8. E-mailed password reset: the table that holds the (hashed) links. */
+IF OBJECT_ID(N'dbo.tbl_PasswordReset', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.tbl_PasswordReset
+    (
+        Id        INT IDENTITY(1, 1) NOT NULL CONSTRAINT PK_tbl_PasswordReset PRIMARY KEY,
+        UserId    INT                NOT NULL,
+        TokenHash CHAR(64)           NOT NULL,
+        CreatedOn DATETIME           NOT NULL,
+        ExpiresOn DATETIME           NOT NULL,
+        UsedOn    DATETIME           NULL,
+        CONSTRAINT UQ_tbl_PasswordReset_TokenHash UNIQUE (TokenHash),
+        CONSTRAINT FK_tbl_PasswordReset_User FOREIGN KEY (UserId) REFERENCES dbo.tbl_User (Id) ON DELETE CASCADE
+    );
 END
 GO
 

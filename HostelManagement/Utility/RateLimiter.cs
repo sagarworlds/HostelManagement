@@ -4,11 +4,11 @@ using System.Collections.Generic;
 namespace HostelManagement
 {
     /// <summary>
-    /// Counts failures per key in a sliding time window and says how long a key must wait once it has used up its
-    /// allowance. Held in memory: it resets when the application restarts, which is acceptable for slowing down
-    /// password guessing and keeps the feature free of schema changes.
+    /// Counts events (failed sign-ins, reset requests) per key in a sliding time window and says how long a key must
+    /// wait once it has used up its allowance. Held in memory: it resets when the application restarts, which is
+    /// acceptable for slowing down guessing and abuse and keeps the feature free of schema changes.
     /// </summary>
-    public class LoginThrottle
+    public class RateLimiter
     {
         // Bounds memory when someone floods the page with made-up keys. Beyond this, new keys are not tracked at all
         // (throttling fails open for them) rather than letting the table grow without limit.
@@ -22,10 +22,10 @@ namespace HostelManagement
         private readonly Dictionary<string, List<DateTime>> _failures = new Dictionary<string, List<DateTime>>();
         private int _calls;
 
-        /// <param name="maximumFailures">Failures allowed inside <paramref name="window"/> before the key is blocked.</param>
-        /// <param name="window">How long a failure counts.</param>
+        /// <param name="maximumFailures">Events allowed inside <paramref name="window"/> before the key is blocked.</param>
+        /// <param name="window">How long an event counts.</param>
         /// <param name="now">Clock; injected so tests do not have to wait.</param>
-        public LoginThrottle(int maximumFailures, TimeSpan window, Func<DateTime> now)
+        public RateLimiter(int maximumFailures, TimeSpan window, Func<DateTime> now)
         {
             if (maximumFailures < 1)
                 throw new ArgumentOutOfRangeException("maximumFailures", "At least one failure must be allowed.");
@@ -55,7 +55,7 @@ namespace HostelManagement
             }
         }
 
-        public void RecordFailure(string key)
+        public void Record(string key)
         {
             lock (_sync)
             {
@@ -75,7 +75,7 @@ namespace HostelManagement
             }
         }
 
-        /// <summary>Forgets a key's failures, e.g. after that same user and address signed in successfully.</summary>
+        /// <summary>Forgets a key's events, e.g. after that same user and address signed in successfully.</summary>
         public void Reset(string key)
         {
             lock (_sync)

@@ -261,6 +261,25 @@ namespace HostelManagement
             }
         }
 
+        public User GetUserByEmail(string email)
+        {
+            const string sql =
+                "SELECT Id, Email, UserType, FirstName, LastName, MobileNo FROM dbo.tbl_User WHERE Email = @Email;";
+
+            try
+            {
+                using (var db = new DBAccess())
+                {
+                    DataTable table = db.lfnGetDataTable(sql, Params(Param("@Email", email)));
+                    return table.Rows.Count == 0 ? null : MapUser(table.Rows[0]);
+                }
+            }
+            catch (SqlException ex)
+            {
+                throw Failure("look up user by e-mail", ex);
+            }
+        }
+
         public OperationResult DeleteStudent(int id)
         {
             try

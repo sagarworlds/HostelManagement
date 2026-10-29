@@ -12,6 +12,10 @@ namespace HostelManagement
         protected void Page_Load(object sender, EventArgs e)
         {
             btnLogin.Click += BtnLogin_Click;
+
+            // Offered only once an administrator has set up the mail server.
+            if (!IsPostBack)
+                lnkForgot.Visible = AppServices.PasswordReset().IsEnabled;
         }
 
         private void BtnLogin_Click(object sender, EventArgs e)

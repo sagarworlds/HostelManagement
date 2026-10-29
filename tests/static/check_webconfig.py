@@ -61,8 +61,17 @@ def main():
             if not re.fullmatch(r"YOUR_[A-Z_]+|\s*", match.group(1)):
                 problems.append("%s: contains what looks like a real password (%r)" % (path.name, match.group(1)))
 
+    # The example settings file may only carry placeholders for the mail credentials.
+    example = (PROJECT / "appSettings.local.config.example").read_text(encoding="utf-8-sig")
+    for match in re.finditer(r'key="Smtp\.(?:Password|UserName)"\s+value="([^"]*)"', example):
+        if match.group(1) and not match.group(1).startswith("YOUR_"):
+            problems.append("appSettings.local.config.example: a mail credential is not a placeholder (%r)" % match.group(1))
+    if web.find("appSettings") is None or web.find("appSettings").get("file") != "appSettings.local.config":
+        problems.append("Web.config: appSettings must read the git-ignored appSettings.local.config (file=)")
+
     ignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
-    for needed in ("HostelManagement/connectionStrings.config", "HostelManagement/App_Data/Logs/"):
+    for needed in ("HostelManagement/connectionStrings.config", "HostelManagement/appSettings.local.config",
+                   "HostelManagement/App_Data/Logs/"):
         if needed not in ignore:
             problems.append(".gitignore does not ignore %s" % needed)
 

@@ -15,15 +15,15 @@ namespace HostelManagement
         public const int MaximumFailuresPerAddress = 30;
         public const int MaximumFailuresPerEmail = 20;
 
-        private readonly LoginThrottle _perEmailAndAddress;
-        private readonly LoginThrottle _perAddress;
-        private readonly LoginThrottle _perEmail;
+        private readonly RateLimiter _perEmailAndAddress;
+        private readonly RateLimiter _perAddress;
+        private readonly RateLimiter _perEmail;
 
         public LoginAttemptPolicy(Func<DateTime> now)
         {
-            _perEmailAndAddress = new LoginThrottle(MaximumFailuresPerEmailAndAddress, Window, now);
-            _perAddress = new LoginThrottle(MaximumFailuresPerAddress, Window, now);
-            _perEmail = new LoginThrottle(MaximumFailuresPerEmail, Window, now);
+            _perEmailAndAddress = new RateLimiter(MaximumFailuresPerEmailAndAddress, Window, now);
+            _perAddress = new RateLimiter(MaximumFailuresPerAddress, Window, now);
+            _perEmail = new RateLimiter(MaximumFailuresPerEmail, Window, now);
         }
 
         /// <returns>Zero when the attempt may proceed; otherwise how long to wait.</returns>
@@ -47,9 +47,9 @@ namespace HostelManagement
             string mail = Normalize(email);
             string ip = address ?? string.Empty;
 
-            _perEmailAndAddress.RecordFailure(mail + "|" + ip);
-            _perAddress.RecordFailure(ip);
-            _perEmail.RecordFailure(mail);
+            _perEmailAndAddress.Record(mail + "|" + ip);
+            _perAddress.Record(ip);
+            _perEmail.Record(mail);
         }
 
         /// <summary>

@@ -365,3 +365,4 @@ FodyWeavers.xsd
 HostelManagement/connectionStrings.config
 HostelManagement/App_Data/Logs/
 tests/js/.out/
+HostelManagement/appSettings.local.config

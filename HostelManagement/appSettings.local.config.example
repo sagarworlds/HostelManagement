@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copy this file to appSettings.local.config (same folder) and fill in your mail server to switch on emailed password
+  reset. appSettings.local.config is git-ignored so the mail password is never committed. Without it the "Forgot
+  password?" link is hidden and nothing is ever sent.
+
+  App.BaseUrl is the public address of the site root. It is used to build the link in the e-mail and is deliberately
+  NOT taken from the incoming request, because a forged Host header would otherwise point reset links at an attacker.
+  It must be https (plain http is only accepted for localhost during development).
+-->
+<appSettings>
+  <add key="App.BaseUrl" value="https://hostel.example.com" />
+
+  <add key="Smtp.Host" value="smtp.example.com" />
+  <add key="Smtp.Port" value="587" />
+  <add key="Smtp.EnableSsl" value="true" />
+  <add key="Smtp.UserName" value="YOUR_SMTP_USER" />
+  <add key="Smtp.Password" value="YOUR_SMTP_PASSWORD" />
+  <add key="Smtp.FromAddress" value="no-reply@example.com" />
+  <add key="Smtp.FromName" value="HostelHub" />
+</appSettings>
