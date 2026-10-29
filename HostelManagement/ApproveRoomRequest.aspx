@@ -25,11 +25,14 @@
                     <asp:Label runat="server" ID="lblUserName" />
                     </p>
                     <p>
-                        Avaialable Room:
+                        Available Room:
                     <asp:DropDownList runat="server" ID="ddlAvailableRooms" DataValueField="Id" DataTextField="RoomName" />
+                    <asp:RequiredFieldValidator runat="server" ControlToValidate="ddlAvailableRooms" InitialValue="0"
+                        ErrorMessage="Select a room." Display="Dynamic" CssClass="text-danger" ValidationGroup="approve" />
                     </p>
-                    <asp:Button Text="Approve " runat="server" CssClass="btn  btn-primary" ID="btnApprove" />
-                    <asp:Button Text="Reject" runat="server" CssClass="btn  btn-primary" ID="btnReject" />
+                    <asp:Button Text="Approve" runat="server" CssClass="btn btn-primary" ID="btnApprove" ValidationGroup="approve" />
+                    <asp:Button Text="Reject" runat="server" CssClass="btn btn-outline-danger" ID="btnReject" CausesValidation="false"
+                        OnClientClick="return confirm('Reject this request?');" />
 
                 </div>
 

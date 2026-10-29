@@ -15,12 +15,12 @@
                 <div class="card border-0 rounded-lg mt-5">
                     <div class="card-body">
                         <div class="form-floating mb-3">
-                            <asp:TextBox runat="server" ID="txtRoomName" placeholder="Room Name" CssClass="form-control" autocomplete="off" />
+                            <asp:TextBox runat="server" ID="txtRoomName" placeholder="Room Name" CssClass="form-control" autocomplete="off" MaxLength="100" />
                             <asp:RequiredFieldValidator ErrorMessage="Required" ControlToValidate="txtRoomName" runat="server" CssClass="text-danger" />
                             <label for="inputEmail">Roon Name</label>
                         </div>
                         <div class="form-floating mb-3">
-                            <asp:TextBox runat="server" ID="txtDescription" TextMode="MultiLine" placeholder="Password" CssClass="form-control" autocomplete="off" />
+                            <asp:TextBox runat="server" ID="txtDescription" TextMode="MultiLine" placeholder="Description" CssClass="form-control" autocomplete="off" />
                             <label for="inputPassword">Description</label>
                         </div>
                          <div class="form-floating mb-3">

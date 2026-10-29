@@ -15,12 +15,12 @@
                     <Columns>
                         <asp:TemplateField HeaderText="Name">
                             <ItemTemplate>
-                                <asp:Label ID="lblFirstName" runat="server" Text='<%#Eval("UserName") %>' />
+                                <asp:Label ID="lblFirstName" runat="server" Text='<%# HttpUtility.HtmlEncode(Convert.ToString(Eval("UserName"))) %>' />
                             </ItemTemplate>
                         </asp:TemplateField>
                         <asp:TemplateField HeaderText="Email">
                             <ItemTemplate>
-                                <asp:Label ID="lblLastName" runat="server" Text='<%#Eval("Email") %>' />
+                                <asp:Label ID="lblLastName" runat="server" Text='<%# HttpUtility.HtmlEncode(Convert.ToString(Eval("Email"))) %>' />
                             </ItemTemplate>
                         </asp:TemplateField>
                         <asp:TemplateField HeaderText="Action">

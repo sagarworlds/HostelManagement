@@ -15,12 +15,12 @@
         </div>
         <div class="row justify-content-center mt-3 ms-2 col-md-10">
             <asp:GridView ID="gvRooms" DataKeyNames="Id" runat="server" AutoGenerateColumns="false"
-                CssClass="table table-bordered " ShowFooter="false" HeaderStyle-Font-Bold="true" OnRowDeleting="gvRooms_RowDeleting">
+                CssClass="table table-bordered " ShowFooter="false" HeaderStyle-Font-Bold="true" OnRowDeleting="gvRooms_RowDeleting" OnRowCommand="gvRooms_RowCommand" EmptyDataText="No rooms have been added yet.">
                 <Columns>
 
-                    <asp:TemplateField HeaderText="Roon No">
+                    <asp:TemplateField HeaderText="Room No">
                         <ItemTemplate>
-                            <asp:Label ID="lblFirstName" runat="server" Text='<%#Eval("RoomName") %>' />
+                            <asp:Label ID="lblFirstName" runat="server" Text='<%# HttpUtility.HtmlEncode(Convert.ToString(Eval("RoomName"))) %>' />
                         </ItemTemplate>
                     </asp:TemplateField>
                     <asp:TemplateField HeaderText="Room Rent">
@@ -30,7 +30,12 @@
                     </asp:TemplateField>
                     <asp:TemplateField HeaderText="Description">
                         <ItemTemplate>
-                            <asp:Label ID="lblPofessorName" runat="server" Text='<%#Eval("Description") %>' CssClass="ellipsis" />
+                            <asp:Label ID="lblPofessorName" runat="server" Text='<%# HttpUtility.HtmlEncode(Convert.ToString(Eval("Description"))) %>' CssClass="ellipsis" />
+                        </ItemTemplate>
+                    </asp:TemplateField>
+                    <asp:TemplateField HeaderText="Status">
+                        <ItemTemplate>
+                            <asp:Label ID="lblStatus" runat="server" Text='<%# HttpUtility.HtmlEncode(Convert.ToString(Eval("OccupancyStatus"))) %>' />
                         </ItemTemplate>
                     </asp:TemplateField>
 
@@ -40,7 +45,10 @@
                                 <span class="material-symbols-outlined">edit_square</span>
                             </asp:HyperLink>
 
-                            <asp:LinkButton runat="server" CommandName="Delete" Text="Delete" CommandArgument='<%# Container.DataItemIndex %>' OnClientClick="return confirm('Are you sure you want to delete this');" ToolTip="Delete">
+                            <asp:LinkButton runat="server" CommandName="Vacate" CommandArgument='<%# Eval("ActiveRequestId") %>' OnClientClick="return confirm('Vacate this room? The student will no longer hold it.');" ToolTip="Vacate room" Visible='<%# (bool)Eval("IsOccupied") %>'>
+                                <span class="material-symbols-outlined">logout</span>
+                            </asp:LinkButton>
+                            <asp:LinkButton runat="server" CommandName="Delete" Text="Delete" CommandArgument='<%# Container.DataItemIndex %>' OnClientClick="return confirm('Are you sure you want to delete this');" ToolTip="Delete" Visible='<%# !(bool)Eval("IsOccupied") %>'>
                                 <span class="material-symbols-outlined">delete</span>
                             </asp:LinkButton>
                         </ItemTemplate>

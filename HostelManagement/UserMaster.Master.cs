@@ -19,7 +19,7 @@ namespace HostelManagement
         protected void Page_Load(object sender, EventArgs e)
         {
             string userName = Convert.ToString(Session["Name"]);
-            lblLoggedInUser.Text = userName;
+            lblLoggedInUser.Text = Server.HtmlEncode(userName);
         }
         protected void lnkLogout_Click(object sender, EventArgs e)
         {

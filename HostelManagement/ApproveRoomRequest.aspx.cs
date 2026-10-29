@@ -1,76 +1,97 @@
 ﻿using HostelManagement.Utility;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using System.Web.UI;
 using System.Web.UI.WebControls;
 
 namespace HostelManagement
 {
     public partial class ApproveRoomRequest : System.Web.UI.Page
     {
-        public string Id   // property
+        private const string DashboardUrl = "~/adminDashboard.aspx";
+
+        private readonly IRequestRoomRepository _requests = AppServices.Requests();
+        private readonly IRoomRepository _rooms = AppServices.Rooms();
+
+        private int RequestId
         {
-            get { return Convert.ToString(Request.QueryString["Id"]); }
-            set { Id = value; }
+            get
+            {
+                int id;
+                return int.TryParse(Request.QueryString["Id"], out id) ? id : 0;
+            }
         }
+
+        private int CurrentAdminId
+        {
+            get { return Convert.ToInt32(Session["UserId"]); }
+        }
+
         protected void Page_Load(object sender, EventArgs e)
         {
-            if (!IsPostBack)
-            {
-                BindAvaialbleRooms();
-                GetRoomRequest();
-            }
             btnApprove.Click += BtnApprove_Click;
+            btnReject.Click += BtnReject_Click;
+            if (IsPostBack)
+                return;
+
+            RequestRoom request = _requests.GetRoomRequestById(RequestId);
+            if (request == null || request.Status != RequestStatus.Pending)
+            {
+                // Only a Pending request can be decided; a stale link or a second administrator lands here.
+                ClientMessage.Flash(this, request == null ? "That request no longer exists." : "That request has already been processed.");
+                Response.Redirect(DashboardUrl);
+                return;
+            }
+
+            // User-supplied text is encoded because Label.Text is written to the page as HTML.
+            lblRequestNo.Text = Convert.ToString(request.Id);
+            lblStatus.Text = Server.HtmlEncode(request.Status);
+            lblUserName.Text = Server.HtmlEncode(request.UserName);
+            BindAvailableRooms();
         }
 
         private void BtnApprove_Click(object sender, EventArgs e)
         {
-            var oRoom = new Room();
-            oRoom.Availability = false;
-            oRoom.ModifiedBy = Convert.ToInt32(Session["UserId"]);
-            oRoom.Id= Convert.ToInt32(ddlAvailableRooms.SelectedValue);
-            RoomDB oRoomDB = new RoomDB();
-            var result = oRoomDB.UpdateRoomAvailablity(oRoom);
-            if (result)
+            // The validator in the "approve" group already blocks the placeholder item; this also covers a posted
+            // value that was never in the list.
+            int roomId;
+            if (!Page.IsValid || !int.TryParse(ddlAvailableRooms.SelectedValue, out roomId) || roomId <= 0)
             {
-                RequestRoom oRequestRoom = new RequestRoom();
-                oRequestRoom.ApprovedRoomId = Convert.ToInt32(ddlAvailableRooms.SelectedValue);
-                oRequestRoom.Status = "Approved";
-                oRequestRoom.ResponseDate = DateTime.Now;
-                oRequestRoom.Id = Convert.ToInt32( Id);
-                oRequestRoom.ModifiedBy = Convert.ToInt32(Session["UserId"]);
-                RequestRoomDB oRequestRoomDB = new RequestRoomDB();
-                oRequestRoomDB.UpdateRoomRequestStatus(oRequestRoom);
+                ClientMessage.Show(this, "Select a room to allocate.");
+                return;
             }
 
+            Complete(_requests.ApproveRequest(RequestId, roomId, CurrentAdminId), "Request approved.");
         }
 
-        private void GetRoomRequest()
+        private void BtnReject_Click(object sender, EventArgs e)
         {
-            RequestRoomDB oRequestRoomDB = new RequestRoomDB();
-            int _id = Convert.ToInt32(Id);
-            var response = oRequestRoomDB.GetRoomRequestListById(_id);
-            if (response != null)
-            {
-                lblRequestNo.Text = Convert.ToString(response.Id);
-                lblStatus.Text = Convert.ToString(response.Status);
-                lblUserName.Text = Convert.ToString(response.UserName);
-            }
+            Complete(_requests.RejectRequest(RequestId, CurrentAdminId), "Request rejected.");
         }
 
-        private void BindAvaialbleRooms()
+        private void Complete(OperationResult result, string successMessage)
         {
-            RoomDB roomDB = new RoomDB();
-            var lstRoom = roomDB.GetAvaialbleRoomList();
-            if (lstRoom != null && lstRoom.Count > 0)
+            if (result.Success)
             {
-                ddlAvailableRooms.DataSource = lstRoom;
-                ddlAvailableRooms.DataBind();
-                ddlAvailableRooms.Items.Insert(0, new ListItem("Select Room", "0"));
+                ClientMessage.Flash(this, successMessage);
+                Response.Redirect(DashboardUrl);
+                return;
             }
+
+            ClientMessage.Show(this, result.Message);
+
+            // The room that was picked may be the one that just went, so offer the current list.
+            BindAvailableRooms();
         }
 
+        private void BindAvailableRooms()
+        {
+            List<Room> rooms = _rooms.GetAvailableRooms();
+            ddlAvailableRooms.DataSource = rooms;
+            ddlAvailableRooms.DataBind();
+            ddlAvailableRooms.Items.Insert(0, new ListItem(rooms.Count > 0 ? "Select Room" : "No rooms available", "0"));
+
+            // With no free room the request can only be rejected.
+            btnApprove.Enabled = rooms.Count > 0;
+        }
     }
 }

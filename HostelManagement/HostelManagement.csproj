@@ -188,6 +188,8 @@
     <Compile Include="Utility\DataAccessException.cs" />
     <Compile Include="Utility\FileLogger.cs" />
     <Compile Include="Utility\ILogger.cs" />
+    <Compile Include="Utility\IRequestRoomRepository.cs" />
+    <Compile Include="Utility\IRoomRepository.cs" />
     <Compile Include="Utility\IUserRepository.cs" />
     <Compile Include="Utility\OperationResult.cs" />
     <Compile Include="Utility\PasswordUtility.cs" />

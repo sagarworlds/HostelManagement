@@ -1,3 +1,5 @@
+using HostelManagement.Utility;
+
 namespace HostelManagement
 {
     /// <summary>
@@ -15,6 +17,16 @@ namespace HostelManagement
         public static IUserRepository Users()
         {
             return new UserDB(Logger());
+        }
+
+        public static IRoomRepository Rooms()
+        {
+            return new RoomDB(Logger());
+        }
+
+        public static IRequestRoomRepository Requests()
+        {
+            return new RequestRoomDB(Logger());
         }
     }
 }
