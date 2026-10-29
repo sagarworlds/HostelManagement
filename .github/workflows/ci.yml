@@ -1,0 +1,31 @@
+name: CI (Linux)
+
+# Everything that does not need Windows, on a Linux runner: static checks, a compile of all C# against the
+# .NET Framework 4.8 reference assemblies, unit tests, and the browser test of the grid script.
+# The Windows-only checks live in scripts/build-windows.ps1 (see windows-build.yml for the manual workflow).
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install the browser used by the grid-search test
+        run: cd tests/js && npm ci --no-audit --no-fund && npx playwright install --with-deps chromium
+
+      - name: Run all Linux checks
+        run: tests/run-local.sh --require-all

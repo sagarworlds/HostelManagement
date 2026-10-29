@@ -1,0 +1,12 @@
+{
+  "name": "hostelhub-client-tests",
+  "private": true,
+  "description": "Browser tests for the client-side scripts. simple-datatables is pinned to the version the master pages load from the CDN.",
+  "scripts": {
+    "test": "node grid-search.test.js"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0",
+    "simple-datatables": "7.1.2"
+  }
+}

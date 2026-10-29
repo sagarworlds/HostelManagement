@@ -1,8 +1,10 @@
-name: Build
+name: Windows build (manual)
 
+# The Windows half of the checks normally runs on a developer machine (scripts/build-windows.ps1) so GitHub's more
+# expensive Windows runners are not used on every push. Start this workflow by hand (Actions tab -> Run workflow)
+# when no Windows machine is at hand.
 on:
-  push:
-  pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -17,22 +19,5 @@ jobs:
 
       - uses: NuGet/setup-nuget@v2
 
-      - name: Restore NuGet packages
-        run: nuget restore HostelManagement.sln
-
-      # The real connectionStrings.config is git-ignored; CI uses the committed template.
-      - name: Create local connection string file
-        run: |
-          if (Test-Path HostelManagement/connectionStrings.config.example) {
-            Copy-Item HostelManagement/connectionStrings.config.example HostelManagement/connectionStrings.config
-          }
-
-      - name: Build
-        run: msbuild HostelManagement.sln /p:Configuration=Release /m /v:minimal
-
-      # MSBuild only compiles code-behind. aspnet_compiler also compiles the .aspx/.master/.ascx
-      # markup, which catches broken markup and designer/markup mismatches before runtime.
-      - name: Compile ASPX markup
-        run: |
-          & "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\aspnet_compiler.exe" -v / -p HostelManagement -f -errorstack "$env:RUNNER_TEMP\precompiled"
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Build and precompile
+        run: ./scripts/build-windows.ps1

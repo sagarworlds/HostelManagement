@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Unit tests for the logic in the web project that does not need System.Web or a database.
+    The source files are linked, not copied, so the tests always exercise the code that ships.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <!-- RNGCryptoServiceProvider and the Rfc2898DeriveBytes(string, byte[], int) constructor are deliberately used by the
+         application (.NET Framework 4.8); their obsolescence warnings on modern .NET are not interesting here. -->
+    <NoWarn>$(NoWarn);SYSLIB0023;SYSLIB0041;NETSDK1188</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\..\HostelManagement\Utility\PasswordPolicy.cs" Link="Linked\PasswordPolicy.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\TemporaryPassword.cs" Link="Linked\TemporaryPassword.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\PasswordUtility.cs" Link="Linked\PasswordUtility.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\UserTypes.cs" Link="Linked\UserTypes.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\RequestStatus.cs" Link="Linked\RequestStatus.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\OperationResult.cs" Link="Linked\OperationResult.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\Room.cs" Link="Linked\Room.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" PrivateAssets="all" />
+  </ItemGroup>
+
+</Project>
