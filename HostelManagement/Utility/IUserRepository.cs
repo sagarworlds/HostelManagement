@@ -19,6 +19,21 @@ namespace HostelManagement
         /// </summary>
         OperationResult UpdateUser(User user);
 
+        /// <summary>Updates the name and mobile number of the account; e-mail, type and password are left alone.</summary>
+        OperationResult UpdateProfile(User user);
+
+        /// <summary>
+        /// Lets a signed-in user choose a new password. The current password must be correct; on success the
+        /// "must change password" flag is cleared.
+        /// </summary>
+        OperationResult ChangePassword(int userId, string currentPassword, string newPassword);
+
+        /// <summary>
+        /// Sets a student's password to <paramref name="temporaryPassword"/> and requires them to replace it at
+        /// their next sign-in. Only student accounts can be reset this way.
+        /// </summary>
+        OperationResult ResetStudentPassword(int studentId, string temporaryPassword);
+
         /// <summary>Checks credentials.</summary>
         /// <returns>The account on success; null when the e-mail is unknown or the password is wrong.</returns>
         /// <exception cref="DataAccessException">The database failed.</exception>

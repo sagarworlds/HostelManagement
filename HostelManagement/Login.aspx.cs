@@ -49,9 +49,12 @@ namespace HostelManagement
             Session["UserId"] = user.Id;
             Session["UserType"] = user.UserType;
             Session["Name"] = user.FirstName + " " + user.LastName;
+            Session[AccessGuard.MustChangePasswordKey] = user.MustChangePassword;
 
             _logger.Info("User " + user.Id + " signed in as " + user.UserType + ".");
-            Response.Redirect(dashboard);
+
+            // After an administrator reset the password, the only way forward is choosing a new one.
+            Response.Redirect(user.MustChangePassword ? AccessGuard.ProfileUrl : dashboard);
         }
 
         /// <returns>The landing page for the account type, or null when the type is not one the application knows.</returns>

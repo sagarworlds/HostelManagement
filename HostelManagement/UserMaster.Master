@@ -36,6 +36,7 @@
                         <li>
                             <hr class="dropdown-divider" />
                         </li>--%>
+                        <li><a class="dropdown-item" href="MyProfile.aspx">My Profile</a></li>
                         <li><asp:LinkButton Text="Logout" runat="server" ID="lnkLogout" OnClick="lnkLogout_Click" CssClass="dropdown-item" /></li>
                     </ul>
                 </li>
@@ -50,7 +51,10 @@
                                 <div class="sb-nav-link-icon"><span class="material-symbols-outlined">dashboard</span></div>
                                 Dashboard
                             </a>
-                             
+                            <a class="nav-link" href="MyProfile.aspx">
+                                <div class="sb-nav-link-icon"><span class="material-symbols-outlined">manage_accounts</span></div>
+                                My Profile
+                            </a>
                         </div>
                     </div>
                     <div class="sb-sidenav-footer">

@@ -5,7 +5,10 @@ namespace HostelManagement
 {
     public partial class AdminList : System.Web.UI.Page
     {
+        private const string ResetPasswordCommand = "ResetPassword";
+
         private readonly IUserRepository _users = AppServices.Users();
+        private readonly ILogger _logger = AppServices.Logger();
 
         /// <summary>
         /// Account type being listed. Read from the query string but restricted to the known types
@@ -32,6 +35,32 @@ namespace HostelManagement
         {
             gvAdmin.DataSource = _users.GetUsersByType(UserType);
             gvAdmin.DataBind();
+        }
+
+        protected void gvAdmin_RowCommand(object sender, GridViewCommandEventArgs e)
+        {
+            // The built-in Delete command also raises RowCommand; it is handled by RowDeleting.
+            if (e.CommandName != ResetPasswordCommand || UserType != UserTypes.Student)
+                return;
+
+            int studentId = Convert.ToInt32(e.CommandArgument);
+            string temporaryPassword = TemporaryPassword.Generate();
+
+            OperationResult result = _users.ResetStudentPassword(studentId, temporaryPassword);
+            if (!result.Success)
+            {
+                ClientMessage.Show(this, result.Message);
+                return;
+            }
+
+            // Who reset whom is logged; the password itself is not. It is shown once, here, and stored only as a hash.
+            _logger.Info("Administrator " + Convert.ToInt32(Session["UserId"]) + " reset the password of student " + studentId + ".");
+
+            User student = _users.GetUserById(studentId);
+            string name = student == null ? "the student" : student.UserName;
+            ClientMessage.Show(this,
+                "Temporary password for " + name + ": " + temporaryPassword +
+                "  -  give it to the student. They must choose a new password when they sign in. It will not be shown again.");
         }
 
         protected void gvAdmin_RowDeleting(object sender, GridViewDeleteEventArgs e)

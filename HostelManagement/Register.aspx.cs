@@ -27,6 +27,13 @@ namespace HostelManagement
                 MobileNo = string.Empty
             };
 
+            string passwordProblem = PasswordPolicy.Validate(user.Password);
+            if (passwordProblem != null)
+            {
+                ClientMessage.Show(this, passwordProblem);
+                return;
+            }
+
             try
             {
                 if (_users.EmailExists(user.Email, 0))

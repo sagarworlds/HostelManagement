@@ -72,6 +72,14 @@ namespace HostelManagement
             if (!Page.IsValid)
                 return;
 
+            // Only a new account has a password to set; editing never touches it.
+            string passwordProblem = EditId == 0 ? PasswordPolicy.Validate(inputPassword.Text) : null;
+            if (passwordProblem != null)
+            {
+                ClientMessage.Show(this, passwordProblem);
+                return;
+            }
+
             string email = inputEmail.Text.Trim();
             OperationResult result;
             try

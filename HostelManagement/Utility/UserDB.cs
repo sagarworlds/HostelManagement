@@ -78,10 +78,100 @@ namespace HostelManagement
             }
         }
 
+        public OperationResult UpdateProfile(User user)
+        {
+            const string sql =
+                "UPDATE dbo.tbl_User SET FirstName = @FirstName, LastName = @LastName, MobileNo = @MobileNo, ModifiedOn = @ModifiedOn " +
+                "WHERE Id = @Id;";
+
+            try
+            {
+                using (var db = new DBAccess())
+                {
+                    int rows = db.lfnExecuteNonQuery(sql, Params(
+                        Param("@FirstName", user.FirstName),
+                        Param("@LastName", user.LastName),
+                        Param("@MobileNo", user.MobileNo),
+                        Param("@ModifiedOn", DateTime.Now),
+                        Param("@Id", user.Id)));
+
+                    return rows == 1 ? OperationResult.Ok() : OperationResult.Fail("Your account could not be found. Please sign in again.");
+                }
+            }
+            catch (SqlException ex)
+            {
+                return FailureResult("update profile " + user.Id, ex);
+            }
+        }
+
+        public OperationResult ChangePassword(int userId, string currentPassword, string newPassword)
+        {
+            try
+            {
+                using (var db = new DBAccess())
+                {
+                    DataTable table = db.lfnGetDataTable(
+                        "SELECT [Password] FROM dbo.tbl_User WHERE Id = @Id;", Params(Param("@Id", userId)));
+                    if (table.Rows.Count == 0)
+                        return OperationResult.Fail("Your account could not be found. Please sign in again.");
+
+                    string storedHash = Convert.ToString(table.Rows[0]["Password"]);
+                    if (!IsPasswordValid(currentPassword, storedHash, "user " + userId))
+                        return OperationResult.Fail("The current password is incorrect.");
+
+                    // Matching on the old hash makes this a compare-and-swap: if the password changed in another
+                    // session between the read above and this update, nothing is overwritten.
+                    int rows = db.lfnExecuteNonQuery(
+                        "UPDATE dbo.tbl_User SET [Password] = @NewHash, MustChangePassword = 0, ModifiedOn = @ModifiedOn " +
+                        "WHERE Id = @Id AND [Password] = @OldHash;",
+                        Params(
+                            Param("@NewHash", PasswordUtility.HashPassword(newPassword)),
+                            Param("@ModifiedOn", DateTime.Now),
+                            Param("@Id", userId),
+                            Param("@OldHash", storedHash)));
+
+                    return rows == 1
+                        ? OperationResult.Ok()
+                        : OperationResult.Fail("Your password was changed from another session. Please try again.");
+                }
+            }
+            catch (SqlException ex)
+            {
+                return FailureResult("change password for user " + userId, ex);
+            }
+        }
+
+        public OperationResult ResetStudentPassword(int studentId, string temporaryPassword)
+        {
+            const string sql =
+                "UPDATE dbo.tbl_User SET [Password] = @Hash, MustChangePassword = 1, ModifiedOn = @ModifiedOn " +
+                "WHERE Id = @Id AND UserType = @UserType;";
+
+            try
+            {
+                using (var db = new DBAccess())
+                {
+                    int rows = db.lfnExecuteNonQuery(sql, Params(
+                        Param("@Hash", PasswordUtility.HashPassword(temporaryPassword)),
+                        Param("@ModifiedOn", DateTime.Now),
+                        Param("@Id", studentId),
+                        Param("@UserType", UserTypes.Student)));
+
+                    return rows == 1 ? OperationResult.Ok() : OperationResult.Fail("This student no longer exists.");
+                }
+            }
+            catch (SqlException ex)
+            {
+                // Only the student's id is logged; the temporary password never reaches the log.
+                return FailureResult("reset password of student " + studentId, ex);
+            }
+        }
+
         public User Authenticate(string email, string password)
         {
             const string sql =
-                "SELECT Id, Email, [Password], UserType, FirstName, LastName, MobileNo FROM dbo.tbl_User WHERE Email = @Email;";
+                "SELECT Id, Email, [Password], UserType, FirstName, LastName, MobileNo, MustChangePassword " +
+                "FROM dbo.tbl_User WHERE Email = @Email;";
 
             try
             {
@@ -235,7 +325,7 @@ namespace HostelManagement
             }
         }
 
-        private bool IsPasswordValid(string password, string storedHash, string email)
+        private bool IsPasswordValid(string password, string storedHash, string accountLabel)
         {
             try
             {
@@ -244,7 +334,7 @@ namespace HostelManagement
             catch (FormatException ex)
             {
                 // A stored hash that is not Base64 means the row was damaged or written by something else.
-                Logger.Error("The stored password hash for '" + email + "' is malformed; this account cannot sign in.", ex);
+                Logger.Error("The stored password hash for '" + accountLabel + "' is malformed; this account cannot use its password.", ex);
                 return false;
             }
         }
@@ -262,6 +352,10 @@ namespace HostelManagement
                 FirstName = firstName,
                 LastName = lastName,
                 MobileNo = Convert.ToString(row["MobileNo"]),
+                // Only the sign-in query selects the flag.
+                MustChangePassword = row.Table.Columns.Contains("MustChangePassword")
+                    && row["MustChangePassword"] != DBNull.Value
+                    && Convert.ToBoolean(row["MustChangePassword"]),
                 UserName = firstName + " " + lastName
             };
         }

@@ -11,7 +11,7 @@
             </div>
             <div class="row justify-content-center mt-3 ms-2 col-md-10">
                 <asp:GridView ID="gvAdmin" DataKeyNames="Id" runat="server" AutoGenerateColumns="false"
-                    CssClass="table table-bordered " ShowFooter="false" HeaderStyle-Font-Bold="true" OnRowDeleting="gvAdmin_RowDeleting" EmptyDataText="No records found.">
+                    CssClass="table table-bordered " ShowFooter="false" HeaderStyle-Font-Bold="true" OnRowDeleting="gvAdmin_RowDeleting" OnRowCommand="gvAdmin_RowCommand" EmptyDataText="No records found.">
                     <Columns>
                         <asp:TemplateField HeaderText="Name">
                             <ItemTemplate>
@@ -28,6 +28,11 @@
                                 <asp:HyperLink NavigateUrl='<%# "AddEditAdmin.aspx?UserType="+UserType+"&Id=" + Eval("Id") %>' runat="server" Style="display: inline-block">
                                 <span class="material-symbols-outlined">edit_square</span>
                                 </asp:HyperLink>
+                                <asp:LinkButton runat="server" CommandName="ResetPassword" CommandArgument='<%# Eval("Id") %>' ToolTip="Reset password"
+                                    OnClientClick="return confirm('Reset the password for this student? A temporary password will be generated.');"
+                                    Visible='<%# UserType == "Student" %>'>
+                                <span class="material-symbols-outlined">lock_reset</span>
+                                </asp:LinkButton>
                                 <asp:LinkButton runat="server" CommandName="Delete" Text="Delete" CommandArgument='<%# Container.DataItemIndex %>' OnClientClick="return confirm('Are you sure you want to delete this');" ToolTip="Delete">
                                 <span class="material-symbols-outlined">delete</span>
                                 </asp:LinkButton>
