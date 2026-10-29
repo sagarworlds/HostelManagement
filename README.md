@@ -10,7 +10,7 @@ A centralized hostel & dormitory management system for administrators and staff.
 ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
 ![Bootstrap](https://img.shields.io/badge/Bootstrap-7952B3?style=for-the-badge&logo=bootstrap&logoColor=white)
 
-A comprehensive web-based Hostel Management System built with **ASP.NET Web Forms**, **C#**, and **Microsoft SQL Server**. It simplifies the administrative processes of managing a hostel by providing features for room allocation, student records, fee tracking, and maintenance requests.
+A comprehensive web-based Hostel Management System built with **ASP.NET Web Forms**, **C#**, and **Microsoft SQL Server**. It simplifies the administrative processes of managing a hostel by providing room allocation, student accounts, announcements and password management. Fee tracking and maintenance requests are not built yet (see the roadmap below).
 
 ## 🚀 Features
 
@@ -21,13 +21,15 @@ The system offers role-based access control with distinct features for Admins an
 * **Room Management:** Add, edit, and delete rooms, see each room's status and current occupant, and vacate a room when a student leaves.
 * **Request Management:** Review, approve, or reject room allocation requests from users.
 * **Admin Management:** Add and manage other administrator accounts.
+* **Announcements:** Post notices that appear on every student's dashboard until they end or are removed.
 * **Student Management:** View and edit student accounts, and issue a temporary password when a student is locked out (they must choose a new one at their next sign-in).
 
 ### 🎓 User Portal
 * **User Authentication:** Secure registration and login functionalities.
-* **Dashboard:** View current room status and announcements.
+* **Dashboard:** Current announcements, and the status of your room requests.
 * **Room Booking:** Browse available rooms and ask for one (the administrator chooses the room), or submit a request with no preference.
-* **Account Settings:** Edit name and mobile number, and change the password (new passwords need at least 8 characters).
+* **Account Settings:** Edit name and mobile number, and change the password (at least 8 characters, and not a commonly guessed one).
+* **Forgot password:** Emailed single-use link that expires after an hour. Switched off until a mail server is configured (see setup step 3); until then an administrator can issue a temporary password.
 
 ### 🔄 Room Request Lifecycle
 `Pending` → `Approved` / `Rejected` / `Cancelled`, and `Approved` → `Vacated`.
@@ -54,7 +56,13 @@ The system offers role-based access control with distinct features for Admins an
 
 ## ⚙️ Architecture & Security
 * **N-Tier Architecture:** Separation of concerns using Model classes (`User.cs`, `Room.cs`) and Data Access Layer classes (`DBAccess.cs`, `UserDB.cs`, `RoomDB.cs`).
-* **Security:** Passwords are mathematically secured using the built-in `PasswordUtility` before saving to the database.
+* **Security:**
+  * Passwords are hashed with PBKDF2-HMAC-SHA256 (600,000 iterations, per-password salt, constant-time comparison). Hashes written by older versions still work and are upgraded the next time that user signs in.
+  * Failed sign-ins are rate limited per account+address, per address and per account, without revealing which accounts exist.
+  * A signed-in session is only trusted together with a second HttpOnly cookie issued at sign-in (defeats session fixation); signed-in pages are never cached; view state is tied to the session.
+  * Cookies are HttpOnly and SameSite=Lax; Release builds also require HTTPS cookies and turn off debug and detailed errors. Security headers (`nosniff`, frame options, referrer policy) are set.
+  * Everything users type is HTML-encoded where it is displayed; reset-link tokens are stored only as hashes.
+  * Not covered: a Content-Security-Policy and HSTS (both depend on how you deploy), and the rate limits are in memory, so they reset when the application restarts and are per server. A reset link's token is part of its URL, so your web server's access log will contain it while it is valid (single use, one hour); keep those logs private.
 * **Validation:** Robust client-side (JavaScript/Bootstrap) and server-side (ASP.NET Validators) input validation.
 
 ## 💻 Prerequisites
@@ -85,6 +93,7 @@ To run this project locally, you will need:
      <add name="DBConnection" connectionString="Data Source=YOUR_SERVER_NAME;Initial Catalog=HMSDB;User ID=YOUR_USER;Password=YOUR_PASSWORD;" providerName="System.Data.SqlClient" />
      ```
    * `connectionStrings.config` is git-ignored, so your credentials are never committed. `Web.config` points to it via `configSource`.
+   * *Optional:* to switch on emailed password reset, copy `HostelManagement\appSettings.local.config.example` to `appSettings.local.config` and fill in your mail server and the public `App.BaseUrl` (https). It is git-ignored too. Without it, nothing is ever sent and the "Forgot password?" link is hidden.
 
 4. **Run the Application**
    * Open `HostelManagement.sln` in Visual Studio.
@@ -105,6 +114,11 @@ Checks are split by what they need, so Windows-only work stays on a developer ma
 
 ## 📸 Screenshots
 *(You can add screenshots of your Dashboard, Login Page, and Room Management here to make the repository more appealing)*
+
+## 🗺️ Roadmap
+Not built yet, because each needs decisions only the people running a hostel can make:
+* **Fee / rent tracking** — what is billed and when, payments, receipts, arrears.
+* **Maintenance requests** — who can raise them, categories, assignment, status.
 
 ## 🤝 Contributing
 Contributions, issues, and feature requests are welcome! Feel free to check the issues page if you want to contribute.

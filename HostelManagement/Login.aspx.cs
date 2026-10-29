@@ -7,10 +7,15 @@ namespace HostelManagement
     {
         private readonly IUserRepository _users = AppServices.Users();
         private readonly ILogger _logger = AppServices.Logger();
+        private readonly LoginAttemptPolicy _attempts = AppServices.LoginAttempts();
 
         protected void Page_Load(object sender, EventArgs e)
         {
             btnLogin.Click += BtnLogin_Click;
+
+            // Offered only once an administrator has set up the mail server.
+            if (!IsPostBack)
+                lnkForgot.Visible = AppServices.PasswordReset().IsEnabled;
         }
 
         private void BtnLogin_Click(object sender, EventArgs e)
@@ -18,10 +23,22 @@ namespace HostelManagement
             if (!Page.IsValid)
                 return;
 
+            string email = inputEmail.Text.Trim();
+            string address = Request.UserHostAddress;
+
+            TimeSpan wait = _attempts.RetryAfter(email, address);
+            if (wait > TimeSpan.Zero)
+            {
+                int minutes = (int)Math.Ceiling(wait.TotalMinutes);
+                _logger.Warn("Sign-in blocked for '" + email + "' from " + address + " after repeated failures.");
+                ClientMessage.Show(this, "Too many failed attempts. Please try again in " + minutes + (minutes == 1 ? " minute." : " minutes."));
+                return;
+            }
+
             User user;
             try
             {
-                user = _users.Authenticate(inputEmail.Text.Trim(), inputPassword.Text);
+                user = _users.Authenticate(email, inputPassword.Text);
             }
             catch (DataAccessException)
             {
@@ -32,9 +49,13 @@ namespace HostelManagement
 
             if (user == null)
             {
+                // Unknown e-mails count too, so the limit never reveals which accounts exist.
+                _attempts.RecordFailure(email, address);
                 ClientMessage.Show(this, "Email or Password is incorrect.");
                 return;
             }
+
+            _attempts.RecordSuccess(email, address);
 
             string dashboard = DashboardFor(user.UserType);
             if (dashboard == null)
@@ -50,6 +71,7 @@ namespace HostelManagement
             Session["UserType"] = user.UserType;
             Session["Name"] = user.FirstName + " " + user.LastName;
             Session[AccessGuard.MustChangePasswordKey] = user.MustChangePassword;
+            LoginBinding.Establish(this);
 
             _logger.Info("User " + user.Id + " signed in as " + user.UserType + ".");
 

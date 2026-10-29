@@ -21,7 +21,8 @@ GO
 
 /* ---------------------------------------------------------------------------------------------
    tbl_User - administrators and students.
-   Password holds Base64(salt[16] + PBKDF2 hash[20]) produced by PasswordUtility (48 characters).
+   Password holds a self-describing PBKDF2 hash produced by PasswordUtility: "v2$<iterations>$<salt>$<hash>", 79
+   characters today. Hashes written by earlier versions (48 characters) are upgraded when their owner signs in.
    MustChangePassword is set when an administrator resets the password; the user is then held on
    the profile page until they choose a new one.
    --------------------------------------------------------------------------------------------- */
@@ -31,7 +32,7 @@ BEGIN
     (
         Id          INT IDENTITY(1, 1) NOT NULL CONSTRAINT PK_tbl_User PRIMARY KEY,
         Email       NVARCHAR(256)      NOT NULL,
-        [Password]  NVARCHAR(128)      NOT NULL,
+        [Password]  NVARCHAR(256)      NOT NULL,
         UserType    NVARCHAR(20)       NOT NULL,
         FirstName   NVARCHAR(100)      NOT NULL,
         LastName    NVARCHAR(100)      NOT NULL,
@@ -99,6 +100,48 @@ BEGIN
         CONSTRAINT FK_tbl_RequestRoom_Room FOREIGN KEY (ApprovedRoomId) REFERENCES dbo.tbl_Room (Id) ON DELETE SET NULL,
         CONSTRAINT FK_tbl_RequestRoom_PreferredRoom FOREIGN KEY (PreferredRoomId) REFERENCES dbo.tbl_Room (Id),
         CONSTRAINT CK_tbl_RequestRoom_Status CHECK ([Status] IN (N'Pending', N'Approved', N'Rejected', N'Cancelled', N'Vacated'))
+    );
+END
+GO
+
+/* ---------------------------------------------------------------------------------------------
+   tbl_PasswordReset - links e-mailed to users who forgot their password.
+   Only the SHA-256 (hex) of a link's random token is stored, so a copy of the database cannot be turned into
+   working links. A link works once (UsedOn) and until ExpiresOn; creating a new link retires older ones.
+   Deleting a user removes their links.
+   --------------------------------------------------------------------------------------------- */
+IF OBJECT_ID(N'dbo.tbl_PasswordReset', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.tbl_PasswordReset
+    (
+        Id        INT IDENTITY(1, 1) NOT NULL CONSTRAINT PK_tbl_PasswordReset PRIMARY KEY,
+        UserId    INT                NOT NULL,
+        TokenHash CHAR(64)           NOT NULL,
+        CreatedOn DATETIME           NOT NULL,
+        ExpiresOn DATETIME           NOT NULL,
+        UsedOn    DATETIME           NULL,
+        CONSTRAINT UQ_tbl_PasswordReset_TokenHash UNIQUE (TokenHash),
+        CONSTRAINT FK_tbl_PasswordReset_User FOREIGN KEY (UserId) REFERENCES dbo.tbl_User (Id) ON DELETE CASCADE
+    );
+END
+GO
+
+/* ---------------------------------------------------------------------------------------------
+   tbl_Announcement - notices administrators post for students.
+   ExpiresOn is the first moment the notice is no longer shown (NULL = until removed). CreatedBy is the
+   administrator's tbl_User.Id; like the other ModifiedBy columns it is deliberately not a foreign key, so an
+   administrator account can be deleted without losing the notices they posted.
+   --------------------------------------------------------------------------------------------- */
+IF OBJECT_ID(N'dbo.tbl_Announcement', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.tbl_Announcement
+    (
+        Id        INT IDENTITY(1, 1) NOT NULL CONSTRAINT PK_tbl_Announcement PRIMARY KEY,
+        Title     NVARCHAR(150)      NOT NULL,
+        Body      NVARCHAR(2000)     NOT NULL,
+        CreatedBy INT                NULL,
+        CreatedOn DATETIME           NOT NULL,
+        ExpiresOn DATETIME           NULL
     );
 END
 GO

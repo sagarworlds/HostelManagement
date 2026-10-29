@@ -15,6 +15,24 @@ namespace HostelManagement
     {
 
         /// <summary>
+        /// phAnnouncements control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.PlaceHolder phAnnouncements;
+
+        /// <summary>
+        /// rptAnnouncements control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Repeater rptAnnouncements;
+
+        /// <summary>
         /// btnAddNewRequest control.
         /// </summary>
         /// <remarks>

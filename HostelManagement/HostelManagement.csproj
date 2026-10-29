@@ -69,6 +69,7 @@
   <ItemGroup>
     <Content Include="AddEditAdmin.aspx" />
     <Content Include="AddEditRoom.aspx" />
+    <Content Include="Announcements.aspx" />
     <Content Include="adminDashboard.aspx" />
     <Content Include="AvailableRooms.aspx" />
     <Content Include="AdminList.aspx" />
@@ -78,12 +79,15 @@
     <Content Include="js\scripts.js" />
     <Content Include="Login.aspx" />
     <Content Include="MyProfile.aspx" />
-    <Content Include="passwordreset.aspx" />
+    <Content Include="ResetPassword.aspx" />
     <Content Include="Register.aspx" />
     <Content Include="RoomList.aspx" />
     <Content Include="UserDashboard.aspx" />
     <Content Include="Controls\AlertModal.ascx" />
     <Content Include="connectionStrings.config" Condition="Exists('connectionStrings.config')" />
+    <Content Include="appSettings.local.config" Condition="Exists('appSettings.local.config')" />
+    <Content Include="Error.aspx" />
+    <Content Include="ForgotPassword.aspx" />
     <Content Include="Global.asax" />
     <Content Include="Web.config" />
   </ItemGroup>
@@ -126,6 +130,13 @@
     <Compile Include="AdminList.aspx.designer.cs">
       <DependentUpon>AdminList.aspx</DependentUpon>
     </Compile>
+    <Compile Include="Announcements.aspx.cs">
+      <DependentUpon>Announcements.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Announcements.aspx.designer.cs">
+      <DependentUpon>Announcements.aspx</DependentUpon>
+    </Compile>
     <Compile Include="ApproveRoomRequest.aspx.cs">
       <DependentUpon>ApproveRoomRequest.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -139,6 +150,13 @@
     </Compile>
     <Compile Include="AvailableRooms.aspx.designer.cs">
       <DependentUpon>AvailableRooms.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="ForgotPassword.aspx.cs">
+      <DependentUpon>ForgotPassword.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="ForgotPassword.aspx.designer.cs">
+      <DependentUpon>ForgotPassword.aspx</DependentUpon>
     </Compile>
     <Compile Include="Login.aspx.cs">
       <DependentUpon>Login.aspx</DependentUpon>
@@ -154,13 +172,6 @@
     <Compile Include="MyProfile.aspx.designer.cs">
       <DependentUpon>MyProfile.aspx</DependentUpon>
     </Compile>
-    <Compile Include="passwordreset.aspx.cs">
-      <DependentUpon>passwordreset.aspx</DependentUpon>
-      <SubType>ASPXCodeBehind</SubType>
-    </Compile>
-    <Compile Include="passwordreset.aspx.designer.cs">
-      <DependentUpon>passwordreset.aspx</DependentUpon>
-    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Register.aspx.cs">
       <DependentUpon>Register.aspx</DependentUpon>
@@ -168,6 +179,13 @@
     </Compile>
     <Compile Include="Register.aspx.designer.cs">
       <DependentUpon>Register.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="ResetPassword.aspx.cs">
+      <DependentUpon>ResetPassword.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="ResetPassword.aspx.designer.cs">
+      <DependentUpon>ResetPassword.aspx</DependentUpon>
     </Compile>
     <Compile Include="RoomList.aspx.cs">
       <DependentUpon>RoomList.aspx</DependentUpon>
@@ -198,6 +216,17 @@
       <DependentUpon>UserMaster.Master</DependentUpon>
     </Compile>
     <Compile Include="Utility\Config.cs" />
+    <Compile Include="Utility\IAnnouncementRepository.cs" />
+    <Compile Include="Utility\HtmlText.cs" />
+    <Compile Include="Utility\AnnouncementDB.cs" />
+    <Compile Include="Utility\Announcement.cs" />
+    <Compile Include="Utility\SmtpSettings.cs" />
+    <Compile Include="Utility\SmtpEmailSender.cs" />
+    <Compile Include="Utility\PasswordResetService.cs" />
+    <Compile Include="Utility\PasswordResetDB.cs" />
+    <Compile Include="Utility\IPasswordResetRepository.cs" />
+    <Compile Include="Utility\IEmailSender.cs" />
+    <Compile Include="Utility\EmailDeliveryException.cs" />
     <Compile Include="Utility\AppServices.cs" />
     <Compile Include="Utility\AccessGuard.cs" />
     <Compile Include="Utility\ClientMessage.cs" />
@@ -209,6 +238,9 @@
     <Compile Include="Utility\GridViewExtensions.cs" />
     <Compile Include="Utility\IDashboardRepository.cs" />
     <Compile Include="Utility\ILogger.cs" />
+    <Compile Include="Utility\LoginAttemptPolicy.cs" />
+    <Compile Include="Utility\LoginBinding.cs" />
+    <Compile Include="Utility\RateLimiter.cs" />
     <Compile Include="Utility\IRequestRoomRepository.cs" />
     <Compile Include="Utility\IRoomRepository.cs" />
     <Compile Include="Utility\IUserRepository.cs" />
@@ -217,6 +249,7 @@
     <Compile Include="Utility\PasswordUtility.cs" />
     <Compile Include="Utility\RepositoryBase.cs" />
     <Compile Include="Utility\RequestStatus.cs" />
+    <Compile Include="Utility\SecureToken.cs" />
     <Compile Include="Utility\StatTile.cs" />
     <Compile Include="Utility\TemporaryPassword.cs" />
     <Compile Include="Utility\RequestRoom.cs" />
@@ -230,6 +263,7 @@
   <ItemGroup>
     <Content Include="Admin.Master" />
     <None Include="connectionStrings.config.example" />
+    <None Include="appSettings.local.config.example" />
     <None Include="packages.config" />
     <Content Include="Site1.Master" />
     <Content Include="UserMaster.Master" />

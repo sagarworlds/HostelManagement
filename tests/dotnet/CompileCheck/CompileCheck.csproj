@@ -21,6 +21,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="WebConfigAttributesExist.cs" />
     <Compile Include="..\..\..\HostelManagement\**\*.cs"
              Exclude="..\..\..\HostelManagement\obj\**;..\..\..\HostelManagement\bin\**;..\..\..\HostelManagement\Properties\**" />
   </ItemGroup>

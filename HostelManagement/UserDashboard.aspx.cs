@@ -9,7 +9,10 @@ namespace HostelManagement
         private const string CancelCommand = "CancelRequest";
         private const string DashboardUrl = "~/UserDashboard.aspx";
 
+        private const int AnnouncementsShown = 5;
+
         private readonly IRequestRoomRepository _requests = AppServices.Requests();
+        private readonly IAnnouncementRepository _announcements = AppServices.Announcements();
 
         private int CurrentUserId
         {
@@ -20,7 +23,20 @@ namespace HostelManagement
         {
             btnAddNewRequest.Click += BtnAddNewRequest_Click;
             if (!IsPostBack)
+            {
+                BindAnnouncements();
                 BindGrid();
+            }
+        }
+
+        private void BindAnnouncements()
+        {
+            var current = _announcements.GetActive(AnnouncementsShown, DateTime.Now);
+
+            // With nothing to say, the whole section (heading included) is left out.
+            phAnnouncements.Visible = current.Count > 0;
+            rptAnnouncements.DataSource = current;
+            rptAnnouncements.DataBind();
         }
 
         private void BtnAddNewRequest_Click(object sender, EventArgs e)

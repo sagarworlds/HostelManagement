@@ -6,7 +6,8 @@
 
     Run it BEFORE deploying a newer version of the application: steps 5 and 6 add columns that the
     current code reads, and sign-in and the request pages fail (and log "schema looks out of date")
-    until they exist.
+    until they exist. Step 7 widens the password column for the new hash format; step 8 adds the table used by
+    e-mailed password reset and step 9 the table used by announcements.
 
     Background: earlier versions of the application never set tbl_Room.Availability when a room was
     created, never recorded when a room became free again, and did not stop a room from being
@@ -65,6 +66,52 @@ GO
 IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = N'FK_tbl_RequestRoom_PreferredRoom')
     ALTER TABLE dbo.tbl_RequestRoom ADD CONSTRAINT FK_tbl_RequestRoom_PreferredRoom
         FOREIGN KEY (PreferredRoomId) REFERENCES dbo.tbl_Room (Id);
+GO
+
+/* 7. Password hashes are longer now (79 characters instead of 48). An older database may have a narrower column,
+      in which case new accounts could not be created and old hashes could not be upgraded at sign-in. */
+DECLARE @passwordNullability NVARCHAR(10);
+SELECT @passwordNullability = CASE WHEN is_nullable = 1 THEN N'NULL' ELSE N'NOT NULL' END
+FROM   sys.columns
+WHERE  object_id = OBJECT_ID(N'dbo.tbl_User') AND name = N'Password'
+  AND  max_length <> -1 AND max_length < 512;   -- bytes: fewer than 256 characters
+IF @passwordNullability IS NOT NULL
+BEGIN
+    DECLARE @widenPassword NVARCHAR(200) = N'ALTER TABLE dbo.tbl_User ALTER COLUMN [Password] NVARCHAR(256) ' + @passwordNullability + N';';
+    EXEC sys.sp_executesql @widenPassword;
+END
+GO
+
+/* 8. E-mailed password reset: the table that holds the (hashed) links. */
+IF OBJECT_ID(N'dbo.tbl_PasswordReset', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.tbl_PasswordReset
+    (
+        Id        INT IDENTITY(1, 1) NOT NULL CONSTRAINT PK_tbl_PasswordReset PRIMARY KEY,
+        UserId    INT                NOT NULL,
+        TokenHash CHAR(64)           NOT NULL,
+        CreatedOn DATETIME           NOT NULL,
+        ExpiresOn DATETIME           NOT NULL,
+        UsedOn    DATETIME           NULL,
+        CONSTRAINT UQ_tbl_PasswordReset_TokenHash UNIQUE (TokenHash),
+        CONSTRAINT FK_tbl_PasswordReset_User FOREIGN KEY (UserId) REFERENCES dbo.tbl_User (Id) ON DELETE CASCADE
+    );
+END
+GO
+
+/* 9. Announcements. */
+IF OBJECT_ID(N'dbo.tbl_Announcement', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.tbl_Announcement
+    (
+        Id        INT IDENTITY(1, 1) NOT NULL CONSTRAINT PK_tbl_Announcement PRIMARY KEY,
+        Title     NVARCHAR(150)      NOT NULL,
+        Body      NVARCHAR(2000)     NOT NULL,
+        CreatedBy INT                NULL,
+        CreatedOn DATETIME           NOT NULL,
+        ExpiresOn DATETIME           NULL
+    );
+END
 GO
 
 /* ---------------------------------------------------------------------------------------------

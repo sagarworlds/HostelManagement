@@ -53,6 +53,10 @@ namespace HostelManagement
         /// <exception cref="DataAccessException">The database failed.</exception>
         User GetUserById(int id);
 
+        /// <returns>The account with this e-mail address (compared ignoring case), or null when there is none.</returns>
+        /// <exception cref="DataAccessException">The database failed.</exception>
+        User GetUserByEmail(string email);
+
         /// <summary>
         /// Deletes a student together with their room requests, and frees the room they hold, in one transaction.
         /// </summary>

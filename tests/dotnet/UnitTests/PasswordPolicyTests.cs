@@ -17,11 +17,34 @@ namespace HostelManagement.UnitTests
         }
 
         [Theory]
-        [InlineData("12345678")]
+        [InlineData("r7Tq9xLm")]                 // exactly the minimum length
         [InlineData("a longer pass phrase")]
         public void Accepts_passwords_of_at_least_the_minimum_length(string password)
         {
             Assert.Null(PasswordPolicy.Validate(password));
+        }
+
+        [Theory]
+        [InlineData("password")]
+        [InlineData("PASSWORD")]        // the blocklist ignores case
+        [InlineData("Password123")]
+        [InlineData("12345678")]
+        [InlineData("qwertyuiop")]
+        [InlineData("HostelHub")]
+        public void Rejects_passwords_attackers_try_first(string password)
+        {
+            string message = PasswordPolicy.Validate(password);
+
+            Assert.NotNull(message);
+            Assert.Contains("too easy to guess", message);
+        }
+
+        [Theory]
+        [InlineData("aaaaaaaa")]
+        [InlineData("00000000000")]
+        public void Rejects_one_character_repeated(string password)
+        {
+            Assert.Contains("too easy to guess", PasswordPolicy.Validate(password));
         }
 
         [Fact]

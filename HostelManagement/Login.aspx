@@ -30,7 +30,7 @@
                             </div>
                            
                             <div class="d-flex align-items-center justify-content-between mt-4 mb-0">
-                                <a class="small" href="passwordreset.aspx" style="visibility:hidden">Forgot Password?</a>
+                                <asp:HyperLink runat="server" ID="lnkForgot" NavigateUrl="~/ForgotPassword.aspx" Text="Forgot Password?" CssClass="small" Visible="false" />
                                 <asp:Button Text="Login" runat="server" ID="btnLogin" CssClass="btn btn-primary" />
                             </div>
                         </div>

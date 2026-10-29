@@ -182,9 +182,11 @@ namespace HostelManagement
                         return null;
 
                     DataRow row = table.Rows[0];
-                    if (!IsPasswordValid(password, Convert.ToString(row["Password"]), email))
+                    string storedHash = Convert.ToString(row["Password"]);
+                    if (!IsPasswordValid(password, storedHash, email))
                         return null;
 
+                    UpgradeHashIfNeeded(db, Convert.ToInt32(row["Id"]), password, storedHash);
                     return MapUser(row);
                 }
             }
@@ -259,6 +261,25 @@ namespace HostelManagement
             }
         }
 
+        public User GetUserByEmail(string email)
+        {
+            const string sql =
+                "SELECT Id, Email, UserType, FirstName, LastName, MobileNo FROM dbo.tbl_User WHERE Email = @Email;";
+
+            try
+            {
+                using (var db = new DBAccess())
+                {
+                    DataTable table = db.lfnGetDataTable(sql, Params(Param("@Email", email)));
+                    return table.Rows.Count == 0 ? null : MapUser(table.Rows[0]);
+                }
+            }
+            catch (SqlException ex)
+            {
+                throw Failure("look up user by e-mail", ex);
+            }
+        }
+
         public OperationResult DeleteStudent(int id)
         {
             try
@@ -322,6 +343,33 @@ namespace HostelManagement
             catch (SqlException ex)
             {
                 return FailureResult("delete administrator " + id, ex);
+            }
+        }
+
+        /// <summary>
+        /// Replaces a legacy or low-cost hash with a current one right after the user proved they know the password,
+        /// which is the only moment the plain password is available. Best effort: the sign-in already succeeded and
+        /// the old hash stays valid, so a failure is logged and retried at the next sign-in.
+        /// </summary>
+        private void UpgradeHashIfNeeded(DBAccess db, int userId, string password, string storedHash)
+        {
+            if (!PasswordUtility.NeedsRehash(storedHash))
+                return;
+
+            try
+            {
+                // Matching on the old hash means a password changed in another session is never overwritten.
+                db.lfnExecuteNonQuery(
+                    "UPDATE dbo.tbl_User SET [Password] = @NewHash WHERE Id = @Id AND [Password] = @OldHash;",
+                    Params(
+                        Param("@NewHash", PasswordUtility.HashPassword(password)),
+                        Param("@Id", userId),
+                        Param("@OldHash", storedHash)));
+            }
+            catch (SqlException ex)
+            {
+                // Most likely the Password column is still narrower than the new hash: run Database/upgrade-existing-db.sql.
+                Logger.Error("Could not upgrade the password hash of user " + userId + "; the old hash keeps working.", ex);
             }
         }
 
