@@ -81,6 +81,7 @@
     <Content Include="RoomList.aspx" />
     <Content Include="UserDashboard.aspx" />
     <Content Include="connectionStrings.config" Condition="Exists('connectionStrings.config')" />
+    <Content Include="Global.asax" />
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
@@ -115,6 +116,9 @@
     <Compile Include="AdminList.aspx.cs">
       <DependentUpon>AdminList.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Global.asax.cs">
+      <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="AdminList.aspx.designer.cs">
       <DependentUpon>AdminList.aspx</DependentUpon>
@@ -177,13 +181,21 @@
       <DependentUpon>UserMaster.Master</DependentUpon>
     </Compile>
     <Compile Include="Utility\Config.cs" />
+    <Compile Include="Utility\ClientMessage.cs" />
     <Compile Include="Utility\DBAccess.cs" />
+    <Compile Include="Utility\DataAccessException.cs" />
+    <Compile Include="Utility\FileLogger.cs" />
+    <Compile Include="Utility\ILogger.cs" />
+    <Compile Include="Utility\OperationResult.cs" />
     <Compile Include="Utility\PasswordUtility.cs" />
+    <Compile Include="Utility\RepositoryBase.cs" />
+    <Compile Include="Utility\RequestStatus.cs" />
     <Compile Include="Utility\RequestRoom.cs" />
     <Compile Include="Utility\RequestRoomDB.cs" />
     <Compile Include="Utility\Room.cs" />
     <Compile Include="Utility\RoomDB.cs" />
     <Compile Include="Utility\User.cs" />
+    <Compile Include="Utility\UserTypes.cs" />
     <Compile Include="Utility\UserDB.cs" />
   </ItemGroup>
   <ItemGroup>

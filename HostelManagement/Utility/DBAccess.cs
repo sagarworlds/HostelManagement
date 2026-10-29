@@ -6,7 +6,11 @@ using System.Text;
 
 namespace HostelManagement
 {
-    public class DBAccess
+    /// <summary>
+    /// Thin ADO.NET wrapper owning one SQL Server connection and, optionally, one transaction.
+    /// Use inside a using block so the connection is closed and an uncommitted transaction is rolled back.
+    /// </summary>
+    public class DBAccess : IDisposable
     {
         private SqlConnection OBJConn = null;
         private SqlTransaction Trans = null;
@@ -35,18 +39,6 @@ namespace HostelManagement
             SQLInMessage(EventNames.SQLDBCONNECT.ToString(), dtStart, dtEnd);
         }
 
-        public void ConnectDB(string ConnString)
-        {
-            DateTime dtStart = DateTime.Now;
-            if (isConnectionOpen())
-                return;
-            SQLOutMessage(EventNames.SQLDBCONNECT.ToString(), dtStart, "");
-            OBJConn.Open();
-            DateTime dtEnd = DateTime.Now;
-            if (Config.SQLQueryTimeout != "")
-                liCommandTimeout = Convert.ToInt32(Config.SQLQueryTimeout);
-            SQLInMessage(EventNames.SQLDBCONNECT.ToString(), dtStart, dtEnd);
-        }
         public void BeginTransaction()
         {
             DateTime dtStart = DateTime.Now;
@@ -97,6 +89,11 @@ namespace HostelManagement
                 OBJConn = null;
             }
         }
+        /// <summary>Closes the connection; any transaction that was not committed is rolled back.</summary>
+        public void Dispose()
+        {
+            CloseDB();
+        }
         public bool isConnectionOpen()
         {
             if (OBJConn == null) return false;
@@ -125,7 +122,6 @@ namespace HostelManagement
 
         public DataTable lfnGetDataTable(string lsOleDb, ArrayList ParameterObjectsArrayList)
         {
-            logStoredPrecedureAndParameters(lsOleDb, ParameterObjectsArrayList);
 
             DateTime dtStart = DateTime.Now;
             SQLOutMessage(EventNames.SQL.ToString(), dtStart, lsOleDb);
@@ -137,7 +133,6 @@ namespace HostelManagement
                 OBJCommand.Parameters.Add(ParameterObjectsArrayList[i]);
             if (Trans != null)
                 OBJCommand.Transaction = Trans;
-            OBJCommand.CommandTimeout = 0;
             string str = OBJCommand.CommandText;
 
             OBJDataReader = OBJCommand.ExecuteReader();
@@ -154,7 +149,6 @@ namespace HostelManagement
 
         public DataTable lfnGetDataTableProcedure(string ProcedureName, ArrayList ParameterObjectsArrayList)
         {
-            logStoredPrecedureAndParameters(ProcedureName, ParameterObjectsArrayList);
 
             DateTime dtStart = DateTime.Now;
             SQLOutMessage(EventNames.SQL.ToString(), dtStart, ProcedureName);
@@ -166,7 +160,6 @@ namespace HostelManagement
                 OBJCommand.Parameters.Add(ParameterObjectsArrayList[i]);
             if (Trans != null)
                 OBJCommand.Transaction = Trans;
-            OBJCommand.CommandTimeout = 0;
             string str = OBJCommand.CommandText;
             OBJCommand.CommandType = System.Data.CommandType.StoredProcedure;
             OBJDataReader = OBJCommand.ExecuteReader();
@@ -181,28 +174,8 @@ namespace HostelManagement
             return OBJDataTable;
         }
 
-        public void lfnGetDataSet(string lsOleDb, string TableName, out DataSet OBJDataSet)
-        {
-            DateTime dtStart = DateTime.Now;
-            SQLOutMessage(EventNames.SQL.ToString(), dtStart, lsOleDb);
-            DataSet OBJDataSet1 = new DataSet();
-            SqlDataAdapter OBJDataAdapter;
-            OBJDataAdapter = new SqlDataAdapter(lsOleDb, OBJConn);
-            if (Trans != null)
-                OBJDataAdapter.SelectCommand.Transaction = Trans;
-            OBJDataAdapter.SelectCommand.CommandTimeout = liCommandTimeout;
-
-            OBJDataAdapter.Fill(OBJDataSet1, TableName);
-            DateTime dtEnd = DateTime.Now;
-            SQLInMessage(EventNames.SQL.ToString(), dtStart, dtEnd);
-            OBJDataSet = OBJDataSet1;
-            OBJDataSet1.Dispose();
-            OBJDataAdapter.Dispose();
-        }
-
         public DataSet lfnGetDataSetSP(string SpName, ArrayList ParameterObjectsArrayList)
         {
-            logStoredPrecedureAndParameters(SpName, ParameterObjectsArrayList);
 
             DateTime dtStart = DateTime.Now;
             SQLOutMessage(EventNames.SQL.ToString(), dtStart, SpName);
@@ -288,7 +261,6 @@ namespace HostelManagement
         }
         public void lfnUpdateData(string lsOleDb, ArrayList ParameterObjectsArrayList)
         {
-            logStoredPrecedureAndParameters(lsOleDb, ParameterObjectsArrayList);
 
             DateTime dtStart = DateTime.Now;
             SQLOutMessage(EventNames.SQL.ToString(), dtStart, lsOleDb);
@@ -305,7 +277,6 @@ namespace HostelManagement
         }
         public void lfnUpdateData(string lsOleDb, ArrayList ParameterObjectsArrayList, string stroreProc)
         {
-            logStoredPrecedureAndParameters(lsOleDb, ParameterObjectsArrayList);
 
             DateTime dtStart = DateTime.Now;
             SQLOutMessage(EventNames.SQL.ToString(), dtStart, lsOleDb);
@@ -323,7 +294,6 @@ namespace HostelManagement
         }
         public void lfnUpdateData(string lsOleDb, ArrayList ParameterObjectsArrayList, out object Identity)
         {
-            logStoredPrecedureAndParameters(lsOleDb, ParameterObjectsArrayList);
 
             DateTime dtStart = DateTime.Now;
             SQLOutMessage(EventNames.SQL.ToString(), dtStart, lsOleDb);
@@ -341,7 +311,6 @@ namespace HostelManagement
         }
         public void lfnUpdateData(string lsOleDb, ArrayList ParameterObjectArrayList, System.Data.ParameterDirection Direction)
         {
-            logStoredPrecedureAndParameters(lsOleDb, ParameterObjectArrayList);
 
             DateTime dtStart = DateTime.Now;
             SQLOutMessage(EventNames.SQL.ToString(), dtStart, lsOleDb);
@@ -357,32 +326,30 @@ namespace HostelManagement
             ParameterObjectArrayList.Clear();
             ParameterObjectArrayList = null;
         }
-        public void lfnUpdateData(string sTableName, string[] sColName, string[] sColValue, string sCondition)
-        {
-            string lsOleDb, lsUpdateColumns = "";
-            lsOleDb = "UPDATE " + sTableName + " SET ";
 
-            for (int i = 0; i < sColName.Length; i++)
-                lfnColumnsForUpdate(sColName[i], sColValue[i], ref lsUpdateColumns);
-            if (lsUpdateColumns.Trim().Length > 0)
-            {
-                lsOleDb = lsOleDb + lsUpdateColumns.Trim().TrimStart(',').TrimEnd(',') + " WHERE " + sCondition;
-                lfnUpdateData(lsOleDb);
-            }
+        /// <summary>
+        /// Runs a parameterised INSERT/UPDATE/DELETE and returns how many rows it changed, so callers can
+        /// tell "nothing matched" (0) from success. Joins the open transaction, if any.
+        /// </summary>
+        public int lfnExecuteNonQuery(string lsOleDb, ArrayList ParameterObjectsArrayList)
+        {
+            DateTime dtStart = DateTime.Now;
+            SQLOutMessage(EventNames.SQL.ToString(), dtStart, lsOleDb);
+            SqlCommand OBJCommand = new SqlCommand(lsOleDb, OBJConn);
+            OBJCommand.CommandTimeout = liCommandTimeout;
+            for (int i = 0; i < ParameterObjectsArrayList.Count; i++)
+                OBJCommand.Parameters.Add(ParameterObjectsArrayList[i]);
+            if (Trans != null)
+                OBJCommand.Transaction = Trans;
+
+            int rowsAffected = OBJCommand.ExecuteNonQuery();
+            DateTime dtEnd = DateTime.Now;
+            SQLInMessage(EventNames.SQL.ToString(), dtStart, dtEnd);
+            return rowsAffected;
         }
         #endregion
-        private void lfnColumnsForUpdate(string sColumnName, string sColumnValue, ref string lsUpdateColumns)
-        {
-            if (!sColumnValue.Equals("-1"))
-            {
-                if (!lsUpdateColumns.Trim().EndsWith(","))
-                    lsUpdateColumns = lsUpdateColumns + ", ";
-                lsUpdateColumns = lsUpdateColumns + sColumnName + "='" + sColumnValue + "', ";
-            }
-        }
         public SqlDataReader lfnGetDataReader(string lsOleDb, ArrayList ParameterObjectsArrayList)
         {
-            logStoredPrecedureAndParameters(lsOleDb, ParameterObjectsArrayList);
 
             DateTime dtStart = DateTime.Now;
             SQLOutMessage(EventNames.SQL.ToString(), dtStart, lsOleDb);
@@ -394,7 +361,6 @@ namespace HostelManagement
                 OBJCommand.Parameters.Add(ParameterObjectsArrayList[i]);
             if (Trans != null)
                 OBJCommand.Transaction = Trans;
-            OBJCommand.CommandTimeout = 0;
             string str = OBJCommand.CommandText;
 
             OBJDataReader = OBJCommand.ExecuteReader();
@@ -458,7 +424,6 @@ namespace HostelManagement
 
         public T lfnExecuteScaler<T>(string lsOleDb, ArrayList ParameterObjectsArrayList)
         {
-            logStoredPrecedureAndParameters(lsOleDb, ParameterObjectsArrayList);
 
             T retVal;
 
@@ -485,7 +450,6 @@ namespace HostelManagement
 
         public T lfnExecuteScalerProcedure<T>(string lsOleDb, ArrayList ParameterObjectsArrayList)
         {
-            logStoredPrecedureAndParameters(lsOleDb, ParameterObjectsArrayList);
 
             T retVal;
 
@@ -571,23 +535,6 @@ namespace HostelManagement
         public enum MessageType
         {
             In, Out
-        }
-
-        private void logStoredPrecedureAndParameters(string spName, ArrayList paramters)
-        {
-            string detail = "SP Name= " + spName;
-
-            detail += "  parameters: ";
-
-            for (int i = 0; i < paramters.Count; i++)
-            {
-                //string name=paramters[i]
-                string name = ((SqlParameter)(paramters[i])).ParameterName;
-                string value = Convert.ToString(((SqlParameter)(paramters[i])).Value);
-
-                detail += " " + name + "=" + value + ",";
-            }
-
         }
     }
 }
