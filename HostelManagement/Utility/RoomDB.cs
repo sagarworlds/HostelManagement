@@ -1,234 +1,215 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
-using System.Linq;
-using System.Security.Policy;
-using System.Web;
+using HostelManagement.Utility;
 
 namespace HostelManagement
 {
-    public class RoomDB
+    /// <summary>SQL Server implementation of <see cref="IRoomRepository"/>.</summary>
+    public class RoomDB : RepositoryBase, IRoomRepository
     {
-        public bool AddRoom(Room oRoom)
+        public RoomDB(ILogger logger) : base(logger)
         {
-            DBAccess oDBAccess = null;
-            int Id = 0;
-            try
-            {
-                oDBAccess = new DBAccess();
-                string Insertstr = "INSERT INTO tbl_Room ([RoomName],[Rent],[Description],[ModifiedBy],[CreatedOn],[ModifiedOn])" +
-                    "  VALUES(@RoomName, @Rent, @Description,@ModifiedBy,@CreatedOn,@ModifiedOn);Select cast(@@Identity as int);";
-
-                ArrayList oParameters = new ArrayList();
-                oParameters.Add(new SqlParameter { ParameterName = "@RoomName", Value = oRoom.RoomName });
-                oParameters.Add(new SqlParameter { ParameterName = "@Rent", Value = oRoom.Rent });
-                oParameters.Add(new SqlParameter { ParameterName = "@Description", Value = oRoom.Description });
-                oParameters.Add(new SqlParameter { ParameterName = "@ModifiedBy", Value = oRoom.ModifiedBy });
-                oParameters.Add(new SqlParameter { ParameterName = "@CreatedOn", Value = oRoom.CreatedOn });
-                oParameters.Add(new SqlParameter { ParameterName = "@ModifiedOn", Value = oRoom.ModifiedOn });
-
-                Id = oDBAccess.lfnExecuteScaler<int>(Insertstr, oParameters);
-            }
-            catch (Exception ex)
-            {
-                Id = 0;
-            }
-            finally
-            {
-                if (oDBAccess != null && oDBAccess.isConnectionOpen()) oDBAccess.CloseDB();
-            }
-            return Id > 0;
         }
 
-        public bool UpdateRoom(Room oRoom)
+        public OperationResult AddRoom(Room room)
         {
-            bool bresult = false; DBAccess oDBAccess = null;
+            // Availability is set explicitly: a new room is free. Relying on a column default left rooms
+            // created without a value (NULL), which are never offered to students.
+            const string sql =
+                "INSERT INTO dbo.tbl_Room (RoomName, Rent, [Description], Availability, ModifiedBy, CreatedOn, ModifiedOn) " +
+                "VALUES (@RoomName, @Rent, @Description, 1, @ModifiedBy, @CreatedOn, @ModifiedOn);";
+
             try
             {
-                oDBAccess = new DBAccess();
-                string UpdateStr = "UPDATE tbl_Room SET RoomName=@RoomName,Rent=@Rent,Description=@Description,ModifiedBy=@ModifiedBy,ModifiedOn=@ModifiedOn Where Id=@Id";
+                using (var db = new DBAccess())
+                {
+                    int rows = db.lfnExecuteNonQuery(sql, Params(
+                        Param("@RoomName", room.RoomName),
+                        Param("@Rent", room.Rent),
+                        Param("@Description", room.Description),
+                        Param("@ModifiedBy", room.ModifiedBy),
+                        Param("@CreatedOn", room.CreatedOn),
+                        Param("@ModifiedOn", room.ModifiedOn)));
 
-                ArrayList oParameters = new ArrayList();
-                oParameters.Add(new SqlParameter() { ParameterName = "@RoomName", Value = oRoom.RoomName });
-                oParameters.Add(new SqlParameter() { ParameterName = "@Rent", Value = oRoom.Rent });
-                oParameters.Add(new SqlParameter() { ParameterName = "@Description", Value = oRoom.Description });
-                oParameters.Add(new SqlParameter() { ParameterName = "@ModifiedBy", Value = oRoom.ModifiedBy });
-                oParameters.Add(new SqlParameter() { ParameterName = "@ModifiedOn", Value = oRoom.ModifiedOn });
-                oParameters.Add(new SqlParameter() { ParameterName = "@Id", Value = oRoom.Id });
-
-                oDBAccess.lfnUpdateData(UpdateStr, oParameters);
-                bresult = true;
+                    return rows == 1 ? OperationResult.Ok() : OperationResult.Fail(GenericWriteFailureMessage);
+                }
             }
-            catch (Exception ex)
+            catch (SqlException ex)
             {
-                //
+                return FailureResult("add room", ex);
             }
-            finally
-            {
-                if (oDBAccess != null && oDBAccess.isConnectionOpen()) oDBAccess.CloseDB();
-            }
-            return bresult;
-
         }
 
-        public bool UpdateRoomAvailablity(Room oRoom)
+        public OperationResult UpdateRoom(Room room)
         {
-            bool bresult = false; DBAccess oDBAccess = null;
+            const string sql =
+                "UPDATE dbo.tbl_Room SET RoomName = @RoomName, Rent = @Rent, [Description] = @Description, " +
+                "ModifiedBy = @ModifiedBy, ModifiedOn = @ModifiedOn WHERE Id = @Id;";
+
             try
             {
-                oDBAccess = new DBAccess();
-                string UpdateStr = "UPDATE tbl_Room SET Availability=@Availability,ModifiedBy=@ModifiedBy,ModifiedOn=@ModifiedOn Where Id=@Id";
+                using (var db = new DBAccess())
+                {
+                    int rows = db.lfnExecuteNonQuery(sql, Params(
+                        Param("@RoomName", room.RoomName),
+                        Param("@Rent", room.Rent),
+                        Param("@Description", room.Description),
+                        Param("@ModifiedBy", room.ModifiedBy),
+                        Param("@ModifiedOn", room.ModifiedOn),
+                        Param("@Id", room.Id)));
 
-                ArrayList oParameters = new ArrayList();
-                oParameters.Add(new SqlParameter() { ParameterName = "@Availability", Value = oRoom.Availability });
-                oParameters.Add(new SqlParameter() { ParameterName = "@ModifiedBy", Value = oRoom.ModifiedBy });
-                oParameters.Add(new SqlParameter() { ParameterName = "@ModifiedOn", Value = oRoom.ModifiedOn });
-                oParameters.Add(new SqlParameter() { ParameterName = "@Id", Value = oRoom.Id });
-
-                oDBAccess.lfnUpdateData(UpdateStr, oParameters);
-                bresult = true;
+                    return rows == 1 ? OperationResult.Ok() : OperationResult.Fail("This room no longer exists.");
+                }
             }
-            catch (Exception ex)
+            catch (SqlException ex)
             {
-                //
+                return FailureResult("update room " + room.Id, ex);
             }
-            finally
-            {
-                if (oDBAccess != null && oDBAccess.isConnectionOpen()) oDBAccess.CloseDB();
-            }
-            return bresult;
-
         }
 
-        public bool DeleteRoom(int Id)
+        public OperationResult DeleteRoom(int id)
         {
-            bool bresult = false;
-            DBAccess oDBAccess = null;
+            // The NOT EXISTS makes "a student holds this room" part of the delete itself, so a room cannot be
+            // removed in the gap between checking and deleting.
+            const string deleteSql =
+                "DELETE FROM dbo.tbl_Room WHERE Id = @Id " +
+                "AND NOT EXISTS (SELECT 1 FROM dbo.tbl_RequestRoom WHERE ApprovedRoomId = @Id AND Status = @Approved);";
+
             try
             {
-                oDBAccess = new DBAccess();
-                string DeleteStr = "Delete From tbl_Room Where Id =@Id";
+                using (var db = new DBAccess())
+                {
+                    db.BeginTransaction();
 
-                ArrayList oParameters = new ArrayList();
-                oParameters.Add(new SqlParameter { ParameterName = "@Id", SqlDbType = SqlDbType.Int, Value = Id });
-                oDBAccess.lfnUpdateData(DeleteStr, oParameters);
-                bresult = true;
+                    // PreferredRoomId only records what a student asked for. Its foreign key does not cascade (SQL Server
+                    // allows only one cascading key to the room table), so clear it here. If the delete below is refused,
+                    // leaving the using block rolls this back.
+                    db.lfnExecuteNonQuery(
+                        "UPDATE dbo.tbl_RequestRoom SET PreferredRoomId = NULL WHERE PreferredRoomId = @Id;",
+                        Params(Param("@Id", id)));
 
+                    int rows = db.lfnExecuteNonQuery(deleteSql, Params(
+                        Param("@Id", id),
+                        Param("@Approved", RequestStatus.Approved)));
+                    if (rows == 1)
+                    {
+                        db.CommitTransaction();
+                        return OperationResult.Ok();
+                    }
+
+                    // Nothing was deleted: either the room is gone already or a student holds it.
+                    int stillThere = db.lfnExecuteScaler<int>(
+                        "SELECT COUNT(1) FROM dbo.tbl_Room WHERE Id = @Id;", Params(Param("@Id", id)));
+
+                    return OperationResult.Fail(stillThere == 0
+                        ? "This room no longer exists."
+                        : "This room is currently allocated to a student. Vacate it before deleting it.");
+                }
             }
-            catch (Exception ex)
+            catch (SqlException ex)
             {
+                if (IsForeignKeyViolation(ex))
+                    return OperationResult.Fail("This room is referenced by other records and cannot be deleted.");
+
+                return FailureResult("delete room " + id, ex);
             }
-            finally
-            {
-                if (oDBAccess != null && oDBAccess.isConnectionOpen()) oDBAccess.CloseDB();
-            }
-            return bresult;
         }
 
         public List<Room> GetRoomList()
         {
-            DBAccess oDBAccess = null;
-            bool oResult = false;
-            List<Room> oRoomList = new List<Room>();
+            const string sql =
+                "SELECT R.Id, R.RoomName, R.Rent, R.[Description], R.Availability, " +
+                "       RR.Id AS ActiveRequestId, U.FirstName + ' ' + U.LastName AS OccupantName " +
+                "FROM dbo.tbl_Room R " +
+                "LEFT JOIN dbo.tbl_RequestRoom RR ON RR.ApprovedRoomId = R.Id AND RR.Status = @Approved " +
+                "LEFT JOIN dbo.tbl_User U ON U.Id = RR.UserId " +
+                "ORDER BY R.RoomName;";
+
             try
             {
-                oDBAccess = new DBAccess();
-                string sql = "SELECT * FROM tbl_Room";
-
-                var oDataTable = oDBAccess.lfnGetDataTable(sql);
-
-                for (int i = 0; i < oDataTable.Rows.Count; i++)
+                using (var db = new DBAccess())
                 {
-                    var row = oDataTable.Rows[i];
-                    var oRoom = new Room();
-                    oRoom.Id = Convert.ToInt32(row["Id"]);
-                    oRoom.RoomName = Convert.ToString(row["RoomName"]);
-                    oRoom.Rent = Convert.ToInt32(row["Rent"]);
-                    oRoom.Description = Convert.ToString(row["Description"]);
-                    oRoomList.Add(oRoom);
+                    DataTable table = db.lfnGetDataTable(sql, Params(Param("@Approved", RequestStatus.Approved)));
+
+                    var rooms = new List<Room>();
+                    foreach (DataRow row in table.Rows)
+                    {
+                        Room room = MapRoom(row);
+                        if (row["ActiveRequestId"] != DBNull.Value)
+                        {
+                            room.ActiveRequestId = Convert.ToInt32(row["ActiveRequestId"]);
+                            room.OccupantName = Convert.ToString(row["OccupantName"]);
+                        }
+
+                        rooms.Add(room);
+                    }
+
+                    return rooms;
                 }
-                oResult = oDataTable.Rows.Count > 0;
             }
-            catch (Exception ex)
+            catch (SqlException ex)
             {
+                throw Failure("list rooms", ex);
             }
-            finally
-            {
-                if (oDBAccess != null && oDBAccess.isConnectionOpen()) oDBAccess.CloseDB();
-            }
-            return oRoomList;
         }
 
-        public Room GetRoomById(int Id)
+        public Room GetRoomById(int id)
         {
-            DBAccess oDBAccess = null;
-            Room oRoom = null;
+            const string sql =
+                "SELECT Id, RoomName, Rent, [Description], Availability FROM dbo.tbl_Room WHERE Id = @Id;";
 
             try
             {
-                oDBAccess = new DBAccess();
-                string sql = "SELECT * FROM tbl_Room WHERE Id=@Id";
-                ArrayList oParameters = new ArrayList();
-                oParameters.Add(new SqlParameter { ParameterName = "@Id", Value = Id });
-                var oDataTable = oDBAccess.lfnGetDataTable(sql, oParameters);
-
-                if (oDataTable.Rows.Count > 0)
+                using (var db = new DBAccess())
                 {
-                    oRoom = new Room();
-                    var row = oDataTable.Rows[0];
-                    oRoom.Id = Convert.ToInt32(row["Id"]);
-                    oRoom.RoomName = Convert.ToString(row["RoomName"]);
-                    oRoom.Rent = Convert.ToInt32(row["Rent"]);
-                    oRoom.Description = Convert.ToString(row["Description"]);
+                    DataTable table = db.lfnGetDataTable(sql, Params(Param("@Id", id)));
+                    return table.Rows.Count == 0 ? null : MapRoom(table.Rows[0]);
                 }
             }
-            catch (Exception ex)
+            catch (SqlException ex)
             {
+                throw Failure("load room " + id, ex);
             }
-            finally
-            {
-                if (oDBAccess != null && oDBAccess.isConnectionOpen()) oDBAccess.CloseDB();
-            }
-            return oRoom;
         }
 
-
-        public List<Room> GetAvaialbleRoomList()
+        public List<Room> GetAvailableRooms()
         {
-            DBAccess oDBAccess = null;
-            bool oResult = false;
-            List<Room> oRoomList = new List<Room>();
+            const string sql =
+                "SELECT Id, RoomName, Rent, [Description], Availability FROM dbo.tbl_Room " +
+                "WHERE Availability = 1 ORDER BY RoomName;";
+
             try
             {
-                oDBAccess = new DBAccess();
-                string sql = "SELECT * FROM tbl_Room where Availability=1";
-
-                var oDataTable = oDBAccess.lfnGetDataTable(sql);
-
-                for (int i = 0; i < oDataTable.Rows.Count; i++)
+                using (var db = new DBAccess())
                 {
-                    var row = oDataTable.Rows[i];
-                    var oRoom = new Room();
-                    oRoom.Id = Convert.ToInt32(row["Id"]);
-                    oRoom.RoomName = Convert.ToString(row["RoomName"]);
-                    //oRoom.Rent = Convert.ToInt32(row["Rent"]);
-                    //oRoom.Description = Convert.ToString(row["Description"]);
-                    oRoomList.Add(oRoom);
+                    DataTable table = db.lfnGetDataTable(sql);
+
+                    var rooms = new List<Room>();
+                    foreach (DataRow row in table.Rows)
+                        rooms.Add(MapRoom(row));
+
+                    return rooms;
                 }
-                oResult = oDataTable.Rows.Count > 0;
             }
-            catch (Exception ex)
+            catch (SqlException ex)
             {
+                throw Failure("list available rooms", ex);
             }
-            finally
-            {
-                if (oDBAccess != null && oDBAccess.isConnectionOpen()) oDBAccess.CloseDB();
-            }
-            return oRoomList;
         }
 
-
+        private static Room MapRoom(DataRow row)
+        {
+            return new Room
+            {
+                Id = Convert.ToInt32(row["Id"]),
+                RoomName = Convert.ToString(row["RoomName"]),
+                Rent = Convert.ToInt32(row["Rent"]),
+                Description = Convert.ToString(row["Description"]),
+                // A NULL flag (rooms created by older versions) is treated as "not available".
+                Availability = row["Availability"] != DBNull.Value && Convert.ToBoolean(row["Availability"])
+            };
+        }
     }
 }

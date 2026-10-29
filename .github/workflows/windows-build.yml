@@ -1,0 +1,23 @@
+name: Windows build (manual)
+
+# The Windows half of the checks normally runs on a developer machine (scripts/build-windows.ps1) so GitHub's more
+# expensive Windows runners are not used on every push. Start this workflow by hand (Actions tab -> Run workflow)
+# when no Windows machine is at hand.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: microsoft/setup-msbuild@v2
+
+      - uses: NuGet/setup-nuget@v2
+
+      - name: Build and precompile
+        run: ./scripts/build-windows.ps1

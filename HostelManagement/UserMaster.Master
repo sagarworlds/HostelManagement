@@ -1,4 +1,5 @@
 ﻿<%@ Master Language="C#" AutoEventWireup="true" CodeBehind="UserMaster.master.cs" Inherits="HostelManagement.UserMaster" %>
+<%@ Register Src="~/Controls/AlertModal.ascx" TagPrefix="hh" TagName="AlertModal" %>
 
 <html>
 <head runat="server">
@@ -19,7 +20,7 @@
     <form id="form1" runat="server">
         <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
             <!-- Navbar Brand-->
-            <a class="navbar-brand ps-3" href="adminDashboard.aspx">Hostel Management</a>
+            <a class="navbar-brand ps-3" href="UserDashboard.aspx">Hostel Management</a>
             <!-- Sidebar Toggle-->
             <button class="btn btn-link btn-sm order-1 order-lg-0 me-4 me-lg-0" id="sidebarToggle" href="#!">
                 <span class="material-symbols-outlined">menu</span></button>
@@ -35,6 +36,7 @@
                         <li>
                             <hr class="dropdown-divider" />
                         </li>--%>
+                        <li><a class="dropdown-item" href="MyProfile.aspx">My Profile</a></li>
                         <li><asp:LinkButton Text="Logout" runat="server" ID="lnkLogout" OnClick="lnkLogout_Click" CssClass="dropdown-item" /></li>
                     </ul>
                 </li>
@@ -49,7 +51,14 @@
                                 <div class="sb-nav-link-icon"><span class="material-symbols-outlined">dashboard</span></div>
                                 Dashboard
                             </a>
-                             
+                            <a class="nav-link" href="AvailableRooms.aspx">
+                                <div class="sb-nav-link-icon"><span class="material-symbols-outlined">bed</span></div>
+                                Available Rooms
+                            </a>
+                            <a class="nav-link" href="MyProfile.aspx">
+                                <div class="sb-nav-link-icon"><span class="material-symbols-outlined">manage_accounts</span></div>
+                                My Profile
+                            </a>
                         </div>
                     </div>
                     <div class="sb-sidenav-footer">
@@ -64,13 +73,11 @@
                 </asp:ContentPlaceHolder>
             </div>
         </div>
+        <hh:AlertModal runat="server" />
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
         <script src="js/scripts.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js" crossorigin="anonymous"></script>
-        <script src="assets/demo/chart-area-demo.js"></script>
-        <script src="assets/demo/chart-bar-demo.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/umd/simple-datatables.min.js" crossorigin="anonymous"></script>
-        <script src="js/datatables-simple-demo.js"></script>
+        <script src="js/grid-search.js"></script>
     </form>
 </body>
 </html>

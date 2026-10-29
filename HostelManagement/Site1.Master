@@ -1,4 +1,5 @@
 ﻿<%@ Master Language="C#" AutoEventWireup="true" CodeBehind="Site1.master.cs" Inherits="HostelManagement.Site1" %>
+<%@ Register Src="~/Controls/AlertModal.ascx" TagPrefix="hh" TagName="AlertModal" %>
 
 <!DOCTYPE html>
 
@@ -38,23 +39,7 @@
                 </footer>
             </div>
         </div>
-        <!-- Modal -->
-        <div class="modal fade" id="modal-alert" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <%--<h5 class="modal-title" id="exampleModalLabel">Alert Modal</h5>--%>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p id="alert-message">This is a simple alert modal with an "OK" button.</p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal" id="okButton">OK</button>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <hh:AlertModal runat="server" />
         <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js" crossorigin="anonymous"></script>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
         <script src="js/scripts.js"></script>

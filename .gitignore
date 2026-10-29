@@ -361,3 +361,7 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+# HostelHub: local database credentials (copy connectionStrings.config.example) and runtime logs
+HostelManagement/connectionStrings.config
+HostelManagement/App_Data/Logs/
+tests/js/.out/

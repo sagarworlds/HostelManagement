@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Compiles every C# file of the web project against the .NET Framework 4.8 reference assemblies, on any OS.
+
+    The real project (HostelManagement/HostelManagement.csproj) is a Windows-only web application project, so it
+    cannot be built on Linux. This project links the same source files and gives the same compiler diagnostics for
+    them. It does NOT compile the .aspx/.master markup; tests/static covers what it can of that, and the Windows
+    build (scripts/build-windows.ps1) remains the authority.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <!-- 7.3 is what the Visual Studio toolchain defaults to for .NET Framework 4.8 projects. -->
+    <LangVersion>7.3</LangVersion>
+    <OutputType>Library</OutputType>
+    <AssemblyName>HostelManagement.CompileCheck</AssemblyName>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\..\HostelManagement\**\*.cs"
+             Exclude="..\..\..\HostelManagement\obj\**;..\..\..\HostelManagement\bin\**;..\..\..\HostelManagement\Properties\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Web.Extensions" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Xml.Linq" />
+  </ItemGroup>
+
+</Project>

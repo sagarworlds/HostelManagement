@@ -15,6 +15,24 @@ namespace HostelManagement
     {
 
         /// <summary>
+        /// rptStats control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Repeater rptStats;
+
+        /// <summary>
+        /// ddlStatusFilter control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.DropDownList ddlStatusFilter;
+
+        /// <summary>
         /// gvRoomsRequest control.
         /// </summary>
         /// <remarks>

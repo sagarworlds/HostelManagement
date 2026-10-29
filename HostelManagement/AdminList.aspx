@@ -7,20 +7,20 @@
         <div class="container-fluid px-4">
             <h1 class="mt-4" runat="server" id="title">Admin List</h1>
             <div class="col-md-10 d-flex justify-content-end">
-                <asp:HyperLink NavigateUrl="~/AddEditAdmin.aspx" runat="server" CssClass="btn btn-primary" ID="hlAddnew" />
+                <asp:HyperLink NavigateUrl="~/AddEditAdmin.aspx" Text="Add Admin" runat="server" CssClass="btn btn-primary" ID="hlAddnew" />
             </div>
             <div class="row justify-content-center mt-3 ms-2 col-md-10">
                 <asp:GridView ID="gvAdmin" DataKeyNames="Id" runat="server" AutoGenerateColumns="false"
-                    CssClass="table table-bordered " ShowFooter="false" HeaderStyle-Font-Bold="true" OnRowDeleting="gvAdmin_RowDeleting">
+                    CssClass="table table-bordered js-datatable" ShowFooter="false" HeaderStyle-Font-Bold="true" OnRowDeleting="gvAdmin_RowDeleting" OnRowCommand="gvAdmin_RowCommand" EmptyDataText="No records found.">
                     <Columns>
                         <asp:TemplateField HeaderText="Name">
                             <ItemTemplate>
-                                <asp:Label ID="lblFirstName" runat="server" Text='<%#Eval("UserName") %>' />
+                                <asp:Label ID="lblFirstName" runat="server" Text='<%# HttpUtility.HtmlEncode(Convert.ToString(Eval("UserName"))) %>' />
                             </ItemTemplate>
                         </asp:TemplateField>
                         <asp:TemplateField HeaderText="Email">
                             <ItemTemplate>
-                                <asp:Label ID="lblLastName" runat="server" Text='<%#Eval("Email") %>' />
+                                <asp:Label ID="lblLastName" runat="server" Text='<%# HttpUtility.HtmlEncode(Convert.ToString(Eval("Email"))) %>' />
                             </ItemTemplate>
                         </asp:TemplateField>
                         <asp:TemplateField HeaderText="Action">
@@ -28,6 +28,11 @@
                                 <asp:HyperLink NavigateUrl='<%# "AddEditAdmin.aspx?UserType="+UserType+"&Id=" + Eval("Id") %>' runat="server" Style="display: inline-block">
                                 <span class="material-symbols-outlined">edit_square</span>
                                 </asp:HyperLink>
+                                <asp:LinkButton runat="server" CommandName="ResetPassword" CommandArgument='<%# Eval("Id") %>' ToolTip="Reset password"
+                                    OnClientClick="return confirm('Reset the password for this student? A temporary password will be generated.');"
+                                    Visible='<%# UserType == "Student" %>'>
+                                <span class="material-symbols-outlined">lock_reset</span>
+                                </asp:LinkButton>
                                 <asp:LinkButton runat="server" CommandName="Delete" Text="Delete" CommandArgument='<%# Container.DataItemIndex %>' OnClientClick="return confirm('Are you sure you want to delete this');" ToolTip="Delete">
                                 <span class="material-symbols-outlined">delete</span>
                                 </asp:LinkButton>

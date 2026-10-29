@@ -5,6 +5,8 @@ namespace HostelManagement
 {
     public partial class Register : System.Web.UI.Page
     {
+        private readonly IUserRepository _users = AppServices.Users();
+
         protected void Page_Load(object sender, EventArgs e)
         {
             btnCreateAccount.Click += BtnCreateAccount_Click;
@@ -12,40 +14,44 @@ namespace HostelManagement
 
         private void BtnCreateAccount_Click(object sender, EventArgs e)
         {
-            if (Page.IsValid)
+            if (!Page.IsValid)
+                return;
+
+            var user = new User
             {
-                var oUser = new User();
+                FirstName = inputFirstName.Text.Trim(),
+                LastName = inputLastName.Text.Trim(),
+                Email = inputEmail.Text.Trim(),
+                Password = inputPassword.Text,
+                UserType = UserTypes.Student,
+                MobileNo = string.Empty
+            };
 
+            string passwordProblem = PasswordPolicy.Validate(user.Password);
+            if (passwordProblem != null)
+            {
+                ClientMessage.Show(this, passwordProblem);
+                return;
+            }
 
-                oUser.FirstName = inputFirstName.Text;
-                oUser.LastName = inputLastName.Text;
-                oUser.Email = inputEmail.Text;
-                oUser.Password = inputPassword.Text;
-                oUser.UserType = "Student";
-                oUser.MobileNo = "";
-                //check if already email exists
-                var oUserDB = new UserDB();
-                string msg = string.Empty;
-                bool isSuccess = false;
-                if (oUserDB.EmailExists(oUser))
+            try
+            {
+                if (_users.EmailExists(user.Email, 0))
                 {
-                    msg = "This email is already exists. Register with different email Id.";
+                    ClientMessage.Show(this, "This email already exists. Register with a different email address.");
+                    return;
                 }
+
+                OperationResult result = _users.AddUser(user);
+                if (result.Success)
+                    ClientMessage.Show(this, "Your registration is successful. Please login.", "~/Login.aspx");
                 else
-                {
-                    isSuccess = oUserDB.AddUser(oUser);
-                    if (isSuccess)
-                    {
-                        msg = "Your registration is successful. Please login";
-                    }
-                    else
-                    {
-                        msg = "Your registration is not successful. Please try again.";
-                    }
-                }
-               
-                string script = "<script type='text/javascript'>showModalmsg('" + msg + "');</script>";
-                ClientScript.RegisterStartupScript(this.GetType(), "CallMyFunction", script, false);
+                    ClientMessage.Show(this, result.Message);
+            }
+            catch (DataAccessException)
+            {
+                // The repository has already logged the cause.
+                ClientMessage.Show(this, ClientMessage.ServiceUnavailable);
             }
         }
     }

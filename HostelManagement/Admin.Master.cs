@@ -11,15 +11,12 @@ namespace HostelManagement
     {
         protected void Page_Init(object sender, EventArgs e)
         {
-            if (Session["UserId"] == null || Convert.ToString(Session["UserType"]) != "Admin")
-            {
-                Response.Redirect("~/Login.aspx");
-            }
+            AccessGuard.Require(Page, UserTypes.Admin);
         }
         protected void Page_Load(object sender, EventArgs e)
         {
             string userName = Convert.ToString(Session["Name"]);
-            lblLoggedInUser.Text = userName;
+            lblLoggedInUser.Text = Server.HtmlEncode(userName);
         }
 
        

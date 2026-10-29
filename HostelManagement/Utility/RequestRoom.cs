@@ -13,6 +13,9 @@ namespace HostelManagement.Utility
 
         public int ApprovedRoomId { get; set; }
 
+        /// <summary>The room the student asked for; 0 when they expressed no preference. Only a preference: the administrator chooses the room.</summary>
+        public int PreferredRoomId { get; set; }
+
         public string Status { get; set; } = "Pending";
 
         public DateTime CreatedOn { get; set; } = DateTime.Now;
@@ -26,6 +29,9 @@ namespace HostelManagement.Utility
         public DateTime ResponseDate { get; set; }
 
         public string RoomName { get; set; }
+
+        /// <summary>Name of the preferred room; empty when there is none.</summary>
+        public string PreferredRoomName { get; set; }
         public string UserName { get; set; }
 
 

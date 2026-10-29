@@ -1,232 +1,313 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Data.SqlClient;
 using System.Data;
-using System.Linq;
-using System.Web;
+using System.Data.SqlClient;
 
 namespace HostelManagement.Utility
 {
-    public class RequestRoomDB
+    /// <summary>SQL Server implementation of <see cref="IRequestRoomRepository"/>.</summary>
+    public class RequestRoomDB : RepositoryBase, IRequestRoomRepository
     {
-        public bool AddRoomRequest(RequestRoom oRequestRoom)
+        private const string AlreadyProcessedMessage = "This request has already been processed.";
+
+        public RequestRoomDB(ILogger logger) : base(logger)
         {
-            int Id = 0;
-            DBAccess oDBAccess = null;
-            try
-            {
-                oDBAccess = new DBAccess();
-                string Insertstr = "INSERT INTO tbl_RequestRoom ([UserId],[Status],[CreatedOn],[RequestDate])" +
-                    "  VALUES(@UserId, @Status,@CreatedOn,@RequestDate);Select cast(@@Identity as int);";
-
-                ArrayList oParameters = new ArrayList();
-                oParameters.Add(new SqlParameter { ParameterName = "@UserId", Value = oRequestRoom.UserId });
-                oParameters.Add(new SqlParameter { ParameterName = "@Status", Value = oRequestRoom.Status });
-                oParameters.Add(new SqlParameter { ParameterName = "@CreatedOn", Value = oRequestRoom.CreatedOn });
-                oParameters.Add(new SqlParameter { ParameterName = "@RequestDate", Value = oRequestRoom.RequestDate });
-
-                Id = oDBAccess.lfnExecuteScaler<int>(Insertstr, oParameters);
-            }
-            catch (Exception ex)
-            {
-                Id = 0;
-            }
-            finally
-            {
-                if (oDBAccess != null && oDBAccess.isConnectionOpen()) oDBAccess.CloseDB();
-            }
-            return Id > 0;
         }
 
-        public bool UpdateRoomRequest(Room oRoom)
+        public OperationResult AddRoomRequest(RequestRoom request)
         {
-            bool bresult = false; DBAccess oDBAccess = null;
+            // The "no active request yet" test is part of the insert, and UPDLOCK/HOLDLOCK keep the range locked, so
+            // two clicks (or two browser tabs) at the same moment cannot both create a request.
+            const string sql =
+                "INSERT INTO dbo.tbl_RequestRoom (UserId, Status, CreatedOn, RequestDate, PreferredRoomId) " +
+                "SELECT @UserId, @Pending, @CreatedOn, @RequestDate, @PreferredRoomId " +
+                "WHERE NOT EXISTS (SELECT 1 FROM dbo.tbl_RequestRoom WITH (UPDLOCK, HOLDLOCK) " +
+                "                  WHERE UserId = @UserId AND Status IN (@Pending, @Approved));";
+
             try
             {
-                oDBAccess = new DBAccess();
-                string UpdateStr = "UPDATE tbl_Room SET RoomName=@RoomName,Rent=@Rent,Description=@Description,ModifiedBy=@ModifiedBy,ModifiedOn=@ModifiedOn Where Id=@Id";
-
-                ArrayList oParameters = new ArrayList();
-                oParameters.Add(new SqlParameter() { ParameterName = "@RoomName", Value = oRoom.RoomName });
-                oParameters.Add(new SqlParameter() { ParameterName = "@Rent", Value = oRoom.Rent });
-                oParameters.Add(new SqlParameter() { ParameterName = "@Description", Value = oRoom.Description });
-                oParameters.Add(new SqlParameter() { ParameterName = "@ModifiedBy", Value = oRoom.ModifiedBy });
-                oParameters.Add(new SqlParameter() { ParameterName = "@ModifiedOn", Value = oRoom.ModifiedOn });
-                oParameters.Add(new SqlParameter() { ParameterName = "@Id", Value = oRoom.Id });
-
-                oDBAccess.lfnUpdateData(UpdateStr, oParameters);
-                bresult = true;
-            }
-            catch (Exception ex)
-            {
-                //
-            }
-            finally
-            {
-                if (oDBAccess != null && oDBAccess.isConnectionOpen()) oDBAccess.CloseDB();
-            }
-            return bresult;
-
-        }
-
-        public bool DeleteRequestRoom(int Id)
-        {
-            bool bresult = false;
-            DBAccess oDBAccess = null;
-            try
-            {
-                oDBAccess = new DBAccess();
-                string DeleteStr = "Delete From tbl_RequestRoom Where Id =@Id";
-
-                ArrayList oParameters = new ArrayList();
-                oParameters.Add(new SqlParameter { ParameterName = "@Id", SqlDbType = SqlDbType.Int, Value = Id });
-                oDBAccess.lfnUpdateData(DeleteStr, oParameters);
-                bresult = true;
-
-            }
-            catch (Exception ex)
-            {
-            }
-            finally
-            {
-                if (oDBAccess != null && oDBAccess.isConnectionOpen()) oDBAccess.CloseDB();
-            }
-            return bresult;
-        }
-
-        public List<RequestRoom> GetRoomRequestListByUserId(int UserId)
-        {
-            DBAccess oDBAccess = null;
-            bool oResult = false;
-            List<RequestRoom> oRequestRoomList = new List<RequestRoom>();
-            try
-            {
-                oDBAccess = new DBAccess();
-                string sql = "SELECT * FROM tbl_RequestRoom LEFT JOIN tbl_Room ON tbl_Room.Id=tbl_RequestRoom.ApprovedRoomId WHERE UserId=@UserId";
-                ArrayList oParameters = new ArrayList();
-                oParameters.Add(new SqlParameter { ParameterName = "@UserId", SqlDbType = SqlDbType.Int, Value = UserId });
-                var oDataTable = oDBAccess.lfnGetDataTable(sql, oParameters);
-
-                for (int i = 0; i < oDataTable.Rows.Count; i++)
+                using (var db = new DBAccess())
                 {
-                    var row = oDataTable.Rows[i];
-                    var oRequestRoom = new RequestRoom();
-                    oRequestRoom.Id = Convert.ToInt32(row["Id"]);
-                    oRequestRoom.Status = Convert.ToString(row["Status"]);
-                    oRequestRoom.RoomName = Convert.ToString(row["RoomName"]);
-                    oRequestRoomList.Add(oRequestRoom);
+                    int rows = db.lfnExecuteNonQuery(sql, Params(
+                        Param("@UserId", request.UserId),
+                        Param("@Pending", RequestStatus.Pending),
+                        Param("@Approved", RequestStatus.Approved),
+                        Param("@CreatedOn", request.CreatedOn),
+                        Param("@RequestDate", request.RequestDate),
+                        Param("@PreferredRoomId", SqlDbType.Int, request.PreferredRoomId > 0 ? (object)request.PreferredRoomId : null)));
+
+                    return rows == 1
+                        ? OperationResult.Ok()
+                        : OperationResult.Fail("You already have a pending request or an allocated room.");
                 }
-                oResult = oDataTable.Rows.Count > 0;
             }
-            catch (Exception ex)
+            catch (SqlException ex)
             {
+                // Either the account was deleted while the session was open, or the room asked for no longer exists.
+                if (IsForeignKeyViolation(ex))
+                    return OperationResult.Fail("Your request could not be saved because your account or the selected room no longer exists.");
+
+                return FailureResult("add room request for user " + request.UserId, ex);
             }
-            finally
-            {
-                if (oDBAccess != null && oDBAccess.isConnectionOpen()) oDBAccess.CloseDB();
-            }
-            return oRequestRoomList;
         }
 
-
-        public List<RequestRoom> GetRoomRequestList()
+        public OperationResult CancelRequest(int requestId, int userId)
         {
-            DBAccess oDBAccess = null;
-            bool oResult = false;
-            List<RequestRoom> oRequestRoomList = new List<RequestRoom>();
+            const string sql =
+                "UPDATE dbo.tbl_RequestRoom SET Status = @Cancelled, ModifiedOn = @Now, ModifiedBy = @UserId " +
+                "WHERE Id = @Id AND UserId = @UserId AND Status = @Pending;";
+
             try
             {
-                oDBAccess = new DBAccess();
-                string sql = "SELECT * FROM tbl_RequestRoom LEFT JOIN tbl_Room ON tbl_Room.Id=tbl_RequestRoom.ApprovedRoomId";
-
-                var oDataTable = oDBAccess.lfnGetDataTable(sql);
-
-                for (int i = 0; i < oDataTable.Rows.Count; i++)
+                using (var db = new DBAccess())
                 {
-                    var row = oDataTable.Rows[i];
-                    var oRequestRoom = new RequestRoom();
-                    oRequestRoom.Id = Convert.ToInt32(row["Id"]);
-                    oRequestRoom.Status = Convert.ToString(row["Status"]);
-                    oRequestRoom.RoomName = Convert.ToString(row["RoomName"]);
-                    oRequestRoomList.Add(oRequestRoom);
+                    int rows = db.lfnExecuteNonQuery(sql, Params(
+                        Param("@Cancelled", RequestStatus.Cancelled),
+                        Param("@Now", DateTime.Now),
+                        Param("@UserId", userId),
+                        Param("@Id", requestId),
+                        Param("@Pending", RequestStatus.Pending)));
+
+                    return rows == 1
+                        ? OperationResult.Ok()
+                        : OperationResult.Fail("Only your own pending requests can be cancelled.");
                 }
-                oResult = oDataTable.Rows.Count > 0;
             }
-            catch (Exception ex)
+            catch (SqlException ex)
             {
+                return FailureResult("cancel request " + requestId, ex);
             }
-            finally
-            {
-                if (oDBAccess != null && oDBAccess.isConnectionOpen()) oDBAccess.CloseDB();
-            }
-            return oRequestRoomList;
         }
 
-        public RequestRoom GetRoomRequestListById(int Id)
+        public OperationResult ApproveRequest(int requestId, int roomId, int adminId)
         {
-            DBAccess oDBAccess = null;
-            bool oResult = false;
-            RequestRoom oRequestRoom = null;
+            DateTime now = DateTime.Now;
+
             try
             {
-                oDBAccess = new DBAccess();
-                string sql = "select TRR.Id, TRR.Status,TU.FirstName + ' ' + Tu.LastName as UserName from tbl_RequestRoom TRR INNER JOIN tbl_User TU ON TU.Id = TRR.UserId where TRR.Id = @Id";
-                ArrayList oParameters = new ArrayList();
-                oParameters.Add(new SqlParameter { ParameterName = "@Id", SqlDbType = SqlDbType.Int, Value = Id });
-                var oDataTable = oDBAccess.lfnGetDataTable(sql, oParameters);
-
-                if (oDataTable.Rows.Count > 0)
+                using (var db = new DBAccess())
                 {
-                    var row = oDataTable.Rows[0];
-                    oRequestRoom = new RequestRoom();
-                    oRequestRoom.Id = Convert.ToInt32(row["Id"]);
-                    oRequestRoom.Status = Convert.ToString(row["Status"]);
-                    //oRequestRoom.RoomName = Convert.ToString(row["RoomName"]);
-                    oRequestRoom.UserName = Convert.ToString(row["UserName"]);
+                    db.BeginTransaction();
+
+                    int requestRows = db.lfnExecuteNonQuery(
+                        "UPDATE dbo.tbl_RequestRoom SET Status = @Approved, ApprovedRoomId = @RoomId, ModifiedOn = @Now, " +
+                        "ModifiedBy = @AdminId, ResponseDate = @Now WHERE Id = @RequestId AND Status = @Pending;",
+                        Params(
+                            Param("@Approved", RequestStatus.Approved),
+                            Param("@RoomId", roomId),
+                            Param("@Now", now),
+                            Param("@AdminId", adminId),
+                            Param("@RequestId", requestId),
+                            Param("@Pending", RequestStatus.Pending)));
+                    if (requestRows == 0)
+                        return OperationResult.Fail(AlreadyProcessedMessage);
+
+                    // Only a room that is still free can be taken. If another administrator got there first this
+                    // matches no row, and leaving the using block rolls back the request update above.
+                    int roomRows = db.lfnExecuteNonQuery(
+                        "UPDATE dbo.tbl_Room SET Availability = 0, ModifiedBy = @AdminId, ModifiedOn = @Now " +
+                        "WHERE Id = @RoomId AND Availability = 1;",
+                        Params(
+                            Param("@AdminId", adminId),
+                            Param("@Now", now),
+                            Param("@RoomId", roomId)));
+                    if (roomRows == 0)
+                        return OperationResult.Fail("The selected room is no longer available. Choose another room.");
+
+                    db.CommitTransaction();
+                    return OperationResult.Ok();
                 }
-                oResult = oDataTable.Rows.Count > 0;
             }
-            catch (Exception ex)
+            catch (SqlException ex)
             {
+                if (IsForeignKeyViolation(ex))
+                    return OperationResult.Fail("The selected room does not exist.");
+
+                return FailureResult("approve request " + requestId + " for room " + roomId, ex);
             }
-            finally
-            {
-                if (oDBAccess != null && oDBAccess.isConnectionOpen()) oDBAccess.CloseDB();
-            }
-            return oRequestRoom;
         }
 
-        public bool UpdateRoomRequestStatus(RequestRoom oRequestRoom)
+        public OperationResult RejectRequest(int requestId, int adminId)
         {
-            bool bresult = false; DBAccess oDBAccess = null;
+            const string sql =
+                "UPDATE dbo.tbl_RequestRoom SET Status = @Rejected, ApprovedRoomId = NULL, ModifiedOn = @Now, " +
+                "ModifiedBy = @AdminId, ResponseDate = @Now WHERE Id = @Id AND Status = @Pending;";
+
             try
             {
-                oDBAccess = new DBAccess();
-                string UpdateStr = "UPDATE tbl_RequestRoom SET Status =@Status, ApprovedRoomId =@ApprovedRoomId,ModifiedOn=@ModifiedOn,[ModifiedBy]=@ModifiedBy , [ResponseDate]=@ResponseDate WHERE Id = @Id;";
+                using (var db = new DBAccess())
+                {
+                    int rows = db.lfnExecuteNonQuery(sql, Params(
+                        Param("@Rejected", RequestStatus.Rejected),
+                        Param("@Now", DateTime.Now),
+                        Param("@AdminId", adminId),
+                        Param("@Id", requestId),
+                        Param("@Pending", RequestStatus.Pending)));
 
-                ArrayList oParameters = new ArrayList();
-                oParameters.Add(new SqlParameter() { ParameterName = "@ApprovedRoomId", Value = oRequestRoom.ApprovedRoomId });
-                oParameters.Add(new SqlParameter() { ParameterName = "@Status", Value = oRequestRoom.Status });
-                oParameters.Add(new SqlParameter() { ParameterName = "@ModifiedOn", Value = oRequestRoom.ModifiedOn });
-                oParameters.Add(new SqlParameter() { ParameterName = "@ModifiedBy", Value = oRequestRoom.ModifiedBy });
-                oParameters.Add(new SqlParameter() { ParameterName = "@ResponseDate", Value = oRequestRoom.ResponseDate });
-                oParameters.Add(new SqlParameter() { ParameterName = "@Id", Value = oRequestRoom.Id });
-
-                oDBAccess.lfnUpdateData(UpdateStr, oParameters);
-                bresult = true;
+                    return rows == 1 ? OperationResult.Ok() : OperationResult.Fail(AlreadyProcessedMessage);
+                }
             }
-            catch (Exception ex)
+            catch (SqlException ex)
             {
-                //
+                return FailureResult("reject request " + requestId, ex);
             }
-            finally
-            {
-                if (oDBAccess != null && oDBAccess.isConnectionOpen()) oDBAccess.CloseDB();
-            }
-            return bresult;
-
         }
 
+        public OperationResult VacateRoom(int requestId, int adminId)
+        {
+            DateTime now = DateTime.Now;
+
+            try
+            {
+                using (var db = new DBAccess())
+                {
+                    db.BeginTransaction();
+
+                    int requestRows = db.lfnExecuteNonQuery(
+                        "UPDATE dbo.tbl_RequestRoom SET Status = @Vacated, ModifiedOn = @Now, ModifiedBy = @AdminId " +
+                        "WHERE Id = @Id AND Status = @Approved;",
+                        Params(
+                            Param("@Vacated", RequestStatus.Vacated),
+                            Param("@Now", now),
+                            Param("@AdminId", adminId),
+                            Param("@Id", requestId),
+                            Param("@Approved", RequestStatus.Approved)));
+                    if (requestRows == 0)
+                        return OperationResult.Fail("This room is no longer allocated.");
+
+                    // The request keeps ApprovedRoomId as history; only the room's availability is restored.
+                    int roomRows = db.lfnExecuteNonQuery(
+                        "UPDATE R SET R.Availability = 1, R.ModifiedBy = @AdminId, R.ModifiedOn = @Now " +
+                        "FROM dbo.tbl_Room R INNER JOIN dbo.tbl_RequestRoom RR ON RR.ApprovedRoomId = R.Id " +
+                        "WHERE RR.Id = @Id;",
+                        Params(
+                            Param("@AdminId", adminId),
+                            Param("@Now", now),
+                            Param("@Id", requestId)));
+                    if (roomRows == 0)
+                    {
+                        Logger.Error("Request " + requestId + " was Approved but no room row matches its ApprovedRoomId; the vacate was rolled back.", null);
+                        return OperationResult.Fail(GenericWriteFailureMessage);
+                    }
+
+                    db.CommitTransaction();
+                    return OperationResult.Ok();
+                }
+            }
+            catch (SqlException ex)
+            {
+                return FailureResult("vacate room for request " + requestId, ex);
+            }
+        }
+
+        public List<RequestRoom> GetRoomRequestListByUserId(int userId)
+        {
+            const string sql =
+                "SELECT RR.Id, RR.Status, RR.RequestDate, R.RoomName, PR.RoomName AS PreferredRoomName " +
+                "FROM dbo.tbl_RequestRoom RR " +
+                "LEFT JOIN dbo.tbl_Room R ON R.Id = RR.ApprovedRoomId " +
+                "LEFT JOIN dbo.tbl_Room PR ON PR.Id = RR.PreferredRoomId " +
+                "WHERE RR.UserId = @UserId ORDER BY RR.Id DESC;";
+
+            try
+            {
+                using (var db = new DBAccess())
+                {
+                    DataTable table = db.lfnGetDataTable(sql, Params(Param("@UserId", userId)));
+                    return MapRequests(table);
+                }
+            }
+            catch (SqlException ex)
+            {
+                throw Failure("list requests for user " + userId, ex);
+            }
+        }
+
+        public List<RequestRoom> GetRoomRequestList(string status)
+        {
+            // Requests waiting for a decision come first, then everything else newest first. A null status means "all".
+            const string sql =
+                "SELECT RR.Id, RR.Status, RR.RequestDate, R.RoomName, PR.RoomName AS PreferredRoomName, " +
+                "       U.FirstName + ' ' + U.LastName AS UserName " +
+                "FROM dbo.tbl_RequestRoom RR " +
+                "INNER JOIN dbo.tbl_User U ON U.Id = RR.UserId " +
+                "LEFT JOIN dbo.tbl_Room R ON R.Id = RR.ApprovedRoomId " +
+                "LEFT JOIN dbo.tbl_Room PR ON PR.Id = RR.PreferredRoomId " +
+                "WHERE (@Status IS NULL OR RR.Status = @Status) " +
+                "ORDER BY CASE WHEN RR.Status = @Pending THEN 0 ELSE 1 END, RR.Id DESC;";
+
+            try
+            {
+                using (var db = new DBAccess())
+                {
+                    DataTable table = db.lfnGetDataTable(sql, Params(
+                        Param("@Status", SqlDbType.NVarChar, string.IsNullOrEmpty(status) ? null : status),
+                        Param("@Pending", RequestStatus.Pending)));
+                    return MapRequests(table);
+                }
+            }
+            catch (SqlException ex)
+            {
+                throw Failure("list room requests", ex);
+            }
+        }
+
+        public RequestRoom GetRoomRequestById(int id)
+        {
+            const string sql =
+                "SELECT RR.Id, RR.Status, RR.RequestDate, RR.PreferredRoomId, R.RoomName, PR.RoomName AS PreferredRoomName, " +
+                "       U.FirstName + ' ' + U.LastName AS UserName " +
+                "FROM dbo.tbl_RequestRoom RR " +
+                "INNER JOIN dbo.tbl_User U ON U.Id = RR.UserId " +
+                "LEFT JOIN dbo.tbl_Room R ON R.Id = RR.ApprovedRoomId " +
+                "LEFT JOIN dbo.tbl_Room PR ON PR.Id = RR.PreferredRoomId " +
+                "WHERE RR.Id = @Id;";
+
+            try
+            {
+                using (var db = new DBAccess())
+                {
+                    DataTable table = db.lfnGetDataTable(sql, Params(Param("@Id", id)));
+                    if (table.Rows.Count == 0)
+                        return null;
+
+                    return MapRequest(table.Rows[0]);
+                }
+            }
+            catch (SqlException ex)
+            {
+                throw Failure("load request " + id, ex);
+            }
+        }
+
+        private static List<RequestRoom> MapRequests(DataTable table)
+        {
+            var requests = new List<RequestRoom>();
+            foreach (DataRow row in table.Rows)
+                requests.Add(MapRequest(row));
+
+            return requests;
+        }
+
+        private static RequestRoom MapRequest(DataRow row)
+        {
+            var request = new RequestRoom
+            {
+                Id = Convert.ToInt32(row["Id"]),
+                Status = Convert.ToString(row["Status"]),
+                RequestDate = Convert.ToDateTime(row["RequestDate"]),
+                RoomName = Convert.ToString(row["RoomName"]),
+                PreferredRoomName = Convert.ToString(row["PreferredRoomName"])
+            };
+
+            // Not every query selects these, so read them only when present.
+            DataColumnCollection columns = row.Table.Columns;
+            if (columns.Contains("PreferredRoomId") && row["PreferredRoomId"] != DBNull.Value)
+                request.PreferredRoomId = Convert.ToInt32(row["PreferredRoomId"]);
+            if (columns.Contains("UserName"))
+                request.UserName = Convert.ToString(row["UserName"]);
+
+            return request;
+        }
     }
 }

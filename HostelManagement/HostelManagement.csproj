@@ -70,16 +70,21 @@
     <Content Include="AddEditAdmin.aspx" />
     <Content Include="AddEditRoom.aspx" />
     <Content Include="adminDashboard.aspx" />
+    <Content Include="AvailableRooms.aspx" />
     <Content Include="AdminList.aspx" />
     <Content Include="ApproveRoomRequest.aspx" />
     <Content Include="css\styles.css" />
-    <Content Include="js\datatables-simple-demo.js" />
+    <Content Include="js\grid-search.js" />
     <Content Include="js\scripts.js" />
     <Content Include="Login.aspx" />
+    <Content Include="MyProfile.aspx" />
     <Content Include="passwordreset.aspx" />
     <Content Include="Register.aspx" />
     <Content Include="RoomList.aspx" />
     <Content Include="UserDashboard.aspx" />
+    <Content Include="Controls\AlertModal.ascx" />
+    <Content Include="connectionStrings.config" Condition="Exists('connectionStrings.config')" />
+    <Content Include="Global.asax" />
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
@@ -115,6 +120,9 @@
       <DependentUpon>AdminList.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
+    <Compile Include="Global.asax.cs">
+      <DependentUpon>Global.asax</DependentUpon>
+    </Compile>
     <Compile Include="AdminList.aspx.designer.cs">
       <DependentUpon>AdminList.aspx</DependentUpon>
     </Compile>
@@ -125,12 +133,26 @@
     <Compile Include="ApproveRoomRequest.aspx.designer.cs">
       <DependentUpon>ApproveRoomRequest.aspx</DependentUpon>
     </Compile>
+    <Compile Include="AvailableRooms.aspx.cs">
+      <DependentUpon>AvailableRooms.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="AvailableRooms.aspx.designer.cs">
+      <DependentUpon>AvailableRooms.aspx</DependentUpon>
+    </Compile>
     <Compile Include="Login.aspx.cs">
       <DependentUpon>Login.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="Login.aspx.designer.cs">
       <DependentUpon>Login.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="MyProfile.aspx.cs">
+      <DependentUpon>MyProfile.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="MyProfile.aspx.designer.cs">
+      <DependentUpon>MyProfile.aspx</DependentUpon>
     </Compile>
     <Compile Include="passwordreset.aspx.cs">
       <DependentUpon>passwordreset.aspx</DependentUpon>
@@ -176,17 +198,38 @@
       <DependentUpon>UserMaster.Master</DependentUpon>
     </Compile>
     <Compile Include="Utility\Config.cs" />
+    <Compile Include="Utility\AppServices.cs" />
+    <Compile Include="Utility\AccessGuard.cs" />
+    <Compile Include="Utility\ClientMessage.cs" />
     <Compile Include="Utility\DBAccess.cs" />
+    <Compile Include="Utility\DashboardDB.cs" />
+    <Compile Include="Utility\DashboardSummary.cs" />
+    <Compile Include="Utility\DataAccessException.cs" />
+    <Compile Include="Utility\FileLogger.cs" />
+    <Compile Include="Utility\GridViewExtensions.cs" />
+    <Compile Include="Utility\IDashboardRepository.cs" />
+    <Compile Include="Utility\ILogger.cs" />
+    <Compile Include="Utility\IRequestRoomRepository.cs" />
+    <Compile Include="Utility\IRoomRepository.cs" />
+    <Compile Include="Utility\IUserRepository.cs" />
+    <Compile Include="Utility\OperationResult.cs" />
+    <Compile Include="Utility\PasswordPolicy.cs" />
     <Compile Include="Utility\PasswordUtility.cs" />
+    <Compile Include="Utility\RepositoryBase.cs" />
+    <Compile Include="Utility\RequestStatus.cs" />
+    <Compile Include="Utility\StatTile.cs" />
+    <Compile Include="Utility\TemporaryPassword.cs" />
     <Compile Include="Utility\RequestRoom.cs" />
     <Compile Include="Utility\RequestRoomDB.cs" />
     <Compile Include="Utility\Room.cs" />
     <Compile Include="Utility\RoomDB.cs" />
     <Compile Include="Utility\User.cs" />
+    <Compile Include="Utility\UserTypes.cs" />
     <Compile Include="Utility\UserDB.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Admin.Master" />
+    <None Include="connectionStrings.config.example" />
     <None Include="packages.config" />
     <Content Include="Site1.Master" />
     <Content Include="UserMaster.Master" />
