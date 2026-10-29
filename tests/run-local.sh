@@ -31,7 +31,7 @@ skip_or_fail() {
 
 # 1. Static checks: need only python3.
 if command -v python3 >/dev/null 2>&1; then
-  for check in check_csproj check_designers check_sql_parameters check_markup check_webconfig; do
+  for check in check_csproj check_designers check_sql_parameters check_sql_comments check_markup check_webconfig; do
     run "static: $check" python3 "tests/static/$check.py"
   done
 else
@@ -46,7 +46,18 @@ else
   skip_or_fail "C# compile check and unit tests" "dotnet SDK not found"
 fi
 
-# 3. Browser test of js/grid-search.js: needs node and a Chromium that Playwright can find.
+# 3. Database tests: the real repositories and SQL scripts against a real SQL Server. They create (and afterwards drop)
+#    a database called HMSDB_IntegrationTest on the server named by HOSTELHUB_TEST_SQLSERVER, never HMSDB itself.
+#    tests/start-sql-server.sh starts a disposable server with Docker and prints the line that sets the variable.
+if command -v dotnet >/dev/null 2>&1; then
+  if [ -n "${HOSTELHUB_TEST_SQLSERVER:-}" ]; then
+    run "database tests (real SQL Server)" dotnet test tests/dotnet/IntegrationTests/IntegrationTests.csproj -nologo -v quiet
+  else
+    skip_or_fail "database tests (real SQL Server)" "HOSTELHUB_TEST_SQLSERVER is not set; run tests/start-sql-server.sh"
+  fi
+fi
+
+# 4. Browser test of js/grid-search.js: needs node and a Chromium that Playwright can find.
 if command -v node >/dev/null 2>&1 && command -v npm >/dev/null 2>&1; then
   run "browser: grid search" bash -c 'cd tests/js && npm ci --silent --no-audit --no-fund && node grid-search.test.js'
 else

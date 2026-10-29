@@ -1,7 +1,8 @@
 name: CI (Linux)
 
 # Everything that does not need Windows, on a Linux runner: static checks, a compile of all C# against the
-# .NET Framework 4.8 reference assemblies, unit tests, and the browser test of the grid script.
+# .NET Framework 4.8 reference assemblies, unit tests, the database tests against a real SQL Server (a service
+# container that lives only for this job), and the browser test of the grid script.
 # The Windows-only checks live in scripts/build-windows.ps1 (see windows-build.yml for the manual workflow).
 on:
   push:
@@ -13,6 +14,30 @@ permissions:
 jobs:
   checks:
     runs-on: ubuntu-latest
+
+    # The password protects nothing: the server exists for this job only and is reachable only from it. SQL Server
+    # insists on a "complex" password, which is why it is not something simpler.
+    env:
+      HOSTELHUB_TEST_SQLSERVER: "Server=localhost,1433;User Id=sa;Password=Ci-Only-Passw0rd-Throwaway;TrustServerCertificate=True;Encrypt=False"
+
+    services:
+      sqlserver:
+        # Same pinned version as tests/start-sql-server.sh.
+        image: mcr.microsoft.com/mssql/server:2022-CU20-ubuntu-22.04
+        env:
+          ACCEPT_EULA: "Y"
+          MSSQL_SA_PASSWORD: "Ci-Only-Passw0rd-Throwaway"
+          MSSQL_PID: Developer
+        ports:
+          - 1433:1433
+        # The steps below start only once this succeeds, so the tests never race the server's start-up.
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P $MSSQL_SA_PASSWORD -Q 'SELECT 1'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 12
+          --health-start-period 20s
+
     steps:
       - uses: actions/checkout@v4
 

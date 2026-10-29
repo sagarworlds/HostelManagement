@@ -7,7 +7,10 @@
     Run it BEFORE deploying a newer version of the application: steps 5 and 6 add columns that the
     current code reads, and sign-in and the request pages fail (and log "schema looks out of date")
     until they exist. Step 7 widens the password column for the new hash format; step 8 adds the table used by
-    e-mailed password reset and step 9 the table used by announcements.
+    e-mailed password reset and step 9 the table used by announcements. Step 10 makes the database refuse a second
+    account with the same e-mail address, which the application relies on (two sign-ups at the same moment would
+    otherwise both get through); it is skipped while duplicates exist, so run the script again once you have
+    resolved the ones it lists at the end.
 
     Background: earlier versions of the application never set tbl_Room.Availability when a room was
     created, never recorded when a room became free again, and did not stop a room from being
@@ -114,6 +117,23 @@ BEGIN
 END
 GO
 
+/* 10. One account per e-mail address. Skipped when duplicates exist (they are listed in the diagnostics below), when
+       the column is too wide to index, or when a unique index on the column is already there. */
+IF NOT EXISTS (
+        SELECT 1
+        FROM   sys.indexes i
+        WHERE  i.object_id = OBJECT_ID(N'dbo.tbl_User') AND i.is_unique = 1 AND i.is_primary_key = 0
+          AND  (SELECT COUNT(1) FROM sys.index_columns ic
+                WHERE ic.object_id = i.object_id AND ic.index_id = i.index_id AND ic.is_included_column = 0) = 1
+          AND  EXISTS (SELECT 1 FROM sys.index_columns ic
+                       INNER JOIN sys.columns c ON c.object_id = ic.object_id AND c.column_id = ic.column_id
+                       WHERE ic.object_id = i.object_id AND ic.index_id = i.index_id AND c.name = N'Email'))
+   AND EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID(N'dbo.tbl_User') AND name = N'Email'
+                 AND max_length > 0 AND max_length <= 900)   -- bytes: the limit for an index key
+   AND NOT EXISTS (SELECT 1 FROM dbo.tbl_User GROUP BY Email HAVING COUNT(1) > 1)
+    ALTER TABLE dbo.tbl_User ADD CONSTRAINT UQ_tbl_User_Email UNIQUE (Email);
+GO
+
 /* ---------------------------------------------------------------------------------------------
    Diagnostics (read-only). Resolve any rows these return before relying on the new workflow.
    --------------------------------------------------------------------------------------------- */
@@ -136,4 +156,12 @@ HAVING COUNT(*) > 1;
 SELECT RR.Id AS RequestId, RR.UserId
 FROM   dbo.tbl_RequestRoom RR
 WHERE  RR.Status = N'Approved' AND (RR.ApprovedRoomId IS NULL OR RR.ApprovedRoomId = 0);
+
+/* E-mail addresses used by more than one account (compared the way the database compares them, which ignores case
+   unless it was set up otherwise). While any are listed, step 10 could not make e-mail addresses unique: merge or
+   change those accounts, then run this script again. */
+SELECT U.Email, COUNT(1) AS Accounts
+FROM   dbo.tbl_User U
+GROUP BY U.Email
+HAVING COUNT(1) > 1;
 GO

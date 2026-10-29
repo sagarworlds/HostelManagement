@@ -287,6 +287,8 @@ namespace HostelManagement
                 using (var db = new DBAccess())
                 {
                     db.BeginTransaction();
+                    if (!TryLockResource(db, AllocationsLock))
+                        return OperationResult.Fail(BusyMessage);
 
                     int students = db.lfnExecuteScaler<int>(
                         "SELECT COUNT(1) FROM dbo.tbl_User WHERE Id = @Id AND UserType = @UserType;",
@@ -323,17 +325,23 @@ namespace HostelManagement
             if (id == currentAdminId)
                 return OperationResult.Fail("You cannot delete the account you are signed in with.");
 
-            // One statement checks "not the last administrator" and deletes, so the rule cannot be bypassed by two
-            // administrators deleting each other at the same time (UPDLOCK/HOLDLOCK serialise the count).
+            // One statement checks "not the last administrator" and deletes. Administrator deletions queue on a lock
+            // first: without it, two administrators deleting each other at the same moment each locked their own row
+            // and then needed the other's to count, and SQL Server ended one of them as a deadlock victim.
             const string sql =
                 "DELETE FROM dbo.tbl_User WHERE Id = @Id AND UserType = @Admin " +
-                "AND (SELECT COUNT(1) FROM dbo.tbl_User WITH (UPDLOCK, HOLDLOCK) WHERE UserType = @Admin) > 1;";
+                "AND (SELECT COUNT(1) FROM dbo.tbl_User WHERE UserType = @Admin) > 1;";
 
             try
             {
                 using (var db = new DBAccess())
                 {
+                    db.BeginTransaction();
+                    if (!TryLockResource(db, AdministratorsLock))
+                        return OperationResult.Fail(BusyMessage);
+
                     int rows = db.lfnExecuteNonQuery(sql, Params(Param("@Id", id), Param("@Admin", UserTypes.Admin)));
+                    db.CommitTransaction();
 
                     return rows == 1
                         ? OperationResult.Ok()

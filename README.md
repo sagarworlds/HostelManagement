@@ -62,6 +62,7 @@ The system offers role-based access control with distinct features for Admins an
   * A signed-in session is only trusted together with a second HttpOnly cookie issued at sign-in (defeats session fixation); signed-in pages are never cached; view state is tied to the session.
   * Cookies are HttpOnly and SameSite=Lax; Release builds also require HTTPS cookies and turn off debug and detailed errors. Security headers (`nosniff`, frame options, referrer policy) are set.
   * Everything users type is HTML-encoded where it is displayed; reset-link tokens are stored only as hashes.
+  * Changes that must not overlap — approving a request into a room, vacating, deleting a room or a student, deleting an administrator, asking for a specific room — queue on a database lock instead of racing. Running two administrators against a real SQL Server showed these otherwise deadlock or leave a spurious refusal, so the database tests keep doing exactly that.
   * Not covered: a Content-Security-Policy and HSTS (both depend on how you deploy), and the rate limits are in memory, so they reset when the application restarts and are per server. A reset link's token is part of its URL, so your web server's access log will contain it while it is valid (single use, one hour); keep those logs private.
 * **Validation:** Robust client-side (JavaScript/Bootstrap) and server-side (ASP.NET Validators) input validation.
 
@@ -84,7 +85,7 @@ To run this project locally, you will need:
    * Open Microsoft SQL Server Management Studio (SSMS).
    * Run `Database\schema.sql` — it creates the `HMSDB` database and its tables.
    * Registration only creates students, so create the first administrator: follow the steps at the top of `Database\seed-admin.sql` (it explains how to generate the password hash) and run it.
-   * Already have an `HMSDB` database from an earlier version? Don't run `schema.sql`; run `Database\upgrade-existing-db.sql` instead, which is safe to repeat and ends with diagnostics for data that needs a manual look. **Run it before deploying a newer version of the application:** newer versions read columns (`MustChangePassword`, `PreferredRoomId`) that older databases don't have, and sign-in fails — with a log entry saying the schema looks out of date — until they exist.
+   * Already have an `HMSDB` database from an earlier version? Don't run `schema.sql`; run `Database\upgrade-existing-db.sql` instead, which is safe to repeat. It ends with diagnostics for data that needs a manual look: rooms allocated to two students, students with more than one active request, approved requests with no room, and accounts that share an e-mail address. Resolve what it lists and run it again (the rule "one account per e-mail address" is only switched on once no duplicates remain). **Run it before deploying a newer version of the application:** newer versions read columns (`MustChangePassword`, `PreferredRoomId`) that older databases don't have, and sign-in fails — with a log entry saying the schema looks out of date — until they exist.
 
 3. **Configure Connection String**
    * Copy `HostelManagement\connectionStrings.config.example` to `HostelManagement\connectionStrings.config`.
@@ -107,8 +108,9 @@ Checks are split by what they need, so Windows-only work stays on a developer ma
 
 | Where | What | How |
 |---|---|---|
-| Any OS with Python, .NET 8 SDK, Node | Static checks (csproj lists every file, designer files match markup, SQL parameters and columns match, markup is well-formed and handlers exist), a compile of all C# against the .NET Framework 4.8 reference assemblies, unit tests, and a headless-browser test of the grid search script | `tests/run-local.sh` (add `--require-all` to fail instead of skip when a tool is missing) |
-| GitHub Actions, Linux (`.github/workflows/ci.yml`) | The same `tests/run-local.sh --require-all` on every push and pull request | automatic |
+| Any OS with Python, .NET 8 SDK, Node | Static checks (csproj lists every file, designer files match markup, SQL parameters and columns match, SQL scripts are well-formed, markup is well-formed and handlers exist), a compile of all C# against the .NET Framework 4.8 reference assemblies, unit tests, and a headless-browser test of the grid search script | `tests/run-local.sh` (add `--require-all` to fail instead of skip when a tool is missing) |
+| The same, plus Docker (or any SQL Server you may create a database on) | **Database tests:** the real repositories and the `Database` scripts run against a real SQL Server — every query, constraint and transaction, two administrators acting at the same moment, `schema.sql` twice, and `upgrade-existing-db.sql` on a database shaped like the original application's. They create and drop a database called `HMSDB_IntegrationTest`, never `HMSDB` | `eval "$(tests/start-sql-server.sh)"` then `tests/run-local.sh` (skipped when `HOSTELHUB_TEST_SQLSERVER` is not set) |
+| GitHub Actions, Linux (`.github/workflows/ci.yml`) | The same `tests/run-local.sh --require-all` on every push and pull request, with a SQL Server service container for the database tests | automatic |
 | Windows with Visual Studio / Build Tools | MSBuild of the real web project and the ASPX precompile, which catches broken markup before run time | `powershell -ExecutionPolicy Bypass -File scripts\build-windows.ps1` |
 | GitHub Actions, Windows (`.github/workflows/windows-build.yml`) | The same Windows script, only when started by hand from the Actions tab | manual |
 
@@ -116,7 +118,7 @@ Checks are split by what they need, so Windows-only work stays on a developer ma
 *(You can add screenshots of your Dashboard, Login Page, and Room Management here to make the repository more appealing)*
 
 ## 🗺️ Roadmap
-Not built yet, because each needs decisions only the people running a hostel can make:
+Not built yet, because each needs decisions only the people running a hostel can make. [docs/roadmap-fees-and-maintenance.md](docs/roadmap-fees-and-maintenance.md) proposes a design for each and lists the questions that need answering first:
 * **Fee / rent tracking** — what is billed and when, payments, receipts, arrears.
 * **Maintenance requests** — who can raise them, categories, assignment, status.
 

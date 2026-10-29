@@ -22,6 +22,18 @@ namespace HostelManagement
         protected const string GenericWriteFailureMessage =
             "Something went wrong while saving. Please try again, and contact the administrator if it keeps happening.";
 
+        /// <summary>Shown when a write gave up waiting for another administrator's change to finish.</summary>
+        protected const string BusyMessage = "Another change is being saved right now. Please try again in a moment.";
+
+        // Names for TryLockResource. Every transaction that must not overlap with another one takes the same name first.
+        /// <summary>Held by anything that changes which student holds which room, or removes a room.</summary>
+        protected const string AllocationsLock = "HostelHub.Allocations";
+
+        /// <summary>Held while an administrator account is deleted, so the "never the last one" rule cannot be raced.</summary>
+        protected const string AdministratorsLock = "HostelHub.Administrators";
+
+        private const int LockWaitMilliseconds = 10000;
+
         protected RepositoryBase(ILogger logger)
         {
             if (logger == null)
@@ -31,6 +43,33 @@ namespace HostelManagement
         }
 
         protected ILogger Logger { get; private set; }
+
+        /// <summary>
+        /// Takes an exclusive lock on a name rather than on table rows, held until the open transaction ends. Call it
+        /// straight after <c>BeginTransaction</c>, before touching any row.
+        /// </summary>
+        /// <remarks>
+        /// Two transactions that each lock some rows and then need the other's rows deadlock, and SQL Server ends one of
+        /// them with an error (found by running two administrators at once). Queueing on one name first means they run
+        /// one after the other and each sees the other's finished result, so the usual checks ("is the room still
+        /// free?", "is this the last administrator?") give the right answer.
+        /// </remarks>
+        /// <returns>False when the lock was not obtained within ten seconds; the caller should return <see cref="BusyMessage"/>.</returns>
+        protected bool TryLockResource(DBAccess db, string resource)
+        {
+            // sp_getapplock returns 0 or 1 when the lock is granted and a negative number otherwise (-1 timed out).
+            int code = db.lfnExecuteScaler<int>(
+                "DECLARE @Result INT; " +
+                "EXEC @Result = sys.sp_getapplock @Resource = @Name, @LockMode = N'Exclusive', @LockOwner = N'Transaction', @LockTimeout = @WaitMs; " +
+                "SELECT @Result;",
+                Params(Param("@Name", resource), Param("@WaitMs", LockWaitMilliseconds)));
+
+            if (code >= 0)
+                return true;
+
+            Logger.Warn("Gave up waiting for the lock '" + resource + "' (sp_getapplock returned " + code + ").");
+            return false;
+        }
 
         /// <summary>Builds a parameter; a null value is sent as SQL NULL (a raw null would mean "not supplied").</summary>
         protected static SqlParameter Param(string name, object value)
