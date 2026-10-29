@@ -5,7 +5,8 @@ import re
 
 from _common import ROOT, UTILITY, finish, read
 
-REPOSITORIES = ["UserDB.cs", "RoomDB.cs", "RequestRoomDB.cs", "DashboardDB.cs", "PasswordResetDB.cs"]
+REPOSITORIES = ["UserDB.cs", "RoomDB.cs", "RequestRoomDB.cs", "DashboardDB.cs", "PasswordResetDB.cs",
+                "AnnouncementDB.cs"]
 DERIVED_COLUMNS = {"ActiveRequestId", "OccupantName", "UserName", "PreferredRoomName",
                    "TotalRooms", "AvailableRooms", "OccupiedRooms", "PendingRequests", "Students", "Admins"}
 
@@ -48,7 +49,7 @@ def main():
                 if column not in columns:
                     problems.append("%s: column '%s' is not defined in Database/schema.sql" % (filename, column))
 
-    if checked < 24:
+    if checked < 28:
         problems.append("only %d SQL methods were found; the checker's pattern probably no longer matches the code" % checked)
     finish("SQL parameters and columns (%d methods)" % checked, problems)
 

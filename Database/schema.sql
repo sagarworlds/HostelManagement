@@ -126,6 +126,26 @@ BEGIN
 END
 GO
 
+/* ---------------------------------------------------------------------------------------------
+   tbl_Announcement - notices administrators post for students.
+   ExpiresOn is the first moment the notice is no longer shown (NULL = until removed). CreatedBy is the
+   administrator's tbl_User.Id; like the other ModifiedBy columns it is deliberately not a foreign key, so an
+   administrator account can be deleted without losing the notices they posted.
+   --------------------------------------------------------------------------------------------- */
+IF OBJECT_ID(N'dbo.tbl_Announcement', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.tbl_Announcement
+    (
+        Id        INT IDENTITY(1, 1) NOT NULL CONSTRAINT PK_tbl_Announcement PRIMARY KEY,
+        Title     NVARCHAR(150)      NOT NULL,
+        Body      NVARCHAR(2000)     NOT NULL,
+        CreatedBy INT                NULL,
+        CreatedOn DATETIME           NOT NULL,
+        ExpiresOn DATETIME           NULL
+    );
+END
+GO
+
 /* Supports "does this student already have an active request" and the per-room allocation look-ups. */
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_tbl_RequestRoom_UserId_Status' AND object_id = OBJECT_ID(N'dbo.tbl_RequestRoom'))
     CREATE INDEX IX_tbl_RequestRoom_UserId_Status ON dbo.tbl_RequestRoom (UserId, [Status]);

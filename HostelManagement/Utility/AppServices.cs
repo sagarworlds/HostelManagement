@@ -53,6 +53,11 @@ namespace HostelManagement
             return new RoomDB(Logger());
         }
 
+        public static IAnnouncementRepository Announcements()
+        {
+            return new AnnouncementDB(Logger());
+        }
+
         public static IDashboardRepository Dashboard()
         {
             return new DashboardDB(Logger());

@@ -5,6 +5,20 @@
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
 
     <main>
+        <asp:PlaceHolder runat="server" ID="phAnnouncements">
+            <div class="container-fluid px-4 mt-4">
+                <h2 class="h4">Announcements</h2>
+                <asp:Repeater runat="server" ID="rptAnnouncements">
+                    <ItemTemplate>
+                        <div class="alert alert-info mb-2" role="alert">
+                            <strong><%# HttpUtility.HtmlEncode(Convert.ToString(Eval("Title"))) %></strong>
+                            <small class="text-muted ms-2"><%# Eval("CreatedOn", "{0:dd MMM yyyy}") %></small>
+                            <p class="mb-0"><%# HostelManagement.HtmlText.FromPlain(Convert.ToString(Eval("Body"))) %></p>
+                        </div>
+                    </ItemTemplate>
+                </asp:Repeater>
+            </div>
+        </asp:PlaceHolder>
         <div class="container-fluid px-4">
             <h1 class="mt-4">Request List</h1>
            <%-- <ol class="breadcrumb mb-4">

@@ -64,6 +64,10 @@
                                 <div class="sb-nav-link-icon"><span class="material-symbols-outlined">shield_person</span></div>
                                 Admins
                             </a>
+                            <a class="nav-link" href="Announcements.aspx">
+                                <div class="sb-nav-link-icon"><span class="material-symbols-outlined">campaign</span></div>
+                                Announcements
+                            </a>
                             <a class="nav-link" href="AdminList.aspx?UserType=Student">
                                 <div class="sb-nav-link-icon">
                                     <span class="material-symbols-outlined">group
