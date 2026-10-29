@@ -20,7 +20,7 @@
                                     <asp:RegularExpressionValidator runat="server" ControlToValidate="inputEmail"
                                         ValidationExpression="^[^\s@]+@[^\s@]+\.[^\s@]+$"
                                         ErrorMessage="Please enter a valid email address." Display="Dynamic" CssClass="text-danger" />
-                                    <label for="inputEmail">Email address</label>
+                                    <label for="<%= inputEmail.ClientID %>">Email address</label>
                                 </div>
                                 <div class="d-flex align-items-center justify-content-between mt-4 mb-0">
                                     <a class="small" href="Login.aspx">Return to login</a>

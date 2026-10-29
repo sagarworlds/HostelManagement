@@ -58,6 +58,7 @@ namespace HostelManagement
             bool isStudent = UserType == UserTypes.Student;
             title.InnerText = isStudent ? "Edit User" : "Edit Admin";
             btnCreateAccount.Text = isStudent ? "Update User" : "Update Admin";
+            Title = isStudent ? "Edit User" : "Edit Admin";
 
             // Passwords are not changed from this page.
             pnlPassword.Visible = false;

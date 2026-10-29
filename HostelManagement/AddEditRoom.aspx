@@ -1,4 +1,4 @@
-﻿<%@ Page Title="" Language="C#" MasterPageFile="~/Admin.Master" AutoEventWireup="true" CodeBehind="AddEditRoom.aspx.cs" Inherits="HostelManagement.AddEditRoom" %>
+﻿<%@ Page Title="Add Room" Language="C#" MasterPageFile="~/Admin.Master" AutoEventWireup="true" CodeBehind="AddEditRoom.aspx.cs" Inherits="HostelManagement.AddEditRoom" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
 </asp:Content>
@@ -17,16 +17,16 @@
                         <div class="form-floating mb-3">
                             <asp:TextBox runat="server" ID="txtRoomName" placeholder="Room Name" CssClass="form-control" autocomplete="off" MaxLength="100" />
                             <asp:RequiredFieldValidator ErrorMessage="Required" ControlToValidate="txtRoomName" runat="server" CssClass="text-danger" />
-                            <label for="inputEmail">Roon Name</label>
+                            <label for="<%= txtRoomName.ClientID %>">Room Name</label>
                         </div>
                         <div class="form-floating mb-3">
                             <asp:TextBox runat="server" ID="txtDescription" TextMode="MultiLine" placeholder="Description" CssClass="form-control" autocomplete="off" />
-                            <label for="inputPassword">Description</label>
+                            <label for="<%= txtDescription.ClientID %>">Description</label>
                         </div>
                          <div class="form-floating mb-3">
                             <asp:TextBox runat="server" ID="txtRent" TextMode="Number" placeholder="Rent" CssClass="form-control" autocomplete="off" />
                             <asp:RequiredFieldValidator ErrorMessage="Required" ControlToValidate="txtRent" runat="server" CssClass="text-danger" />
-                            <label for="inputPassword">Rent</label>
+                            <label for="<%= txtRent.ClientID %>">Rent</label>
                         </div>
 
                         <div class="d-flex align-items-center justify-content-between mt-4 mb-0">

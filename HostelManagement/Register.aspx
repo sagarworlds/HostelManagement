@@ -18,7 +18,7 @@
                                         <%--<input class="form-control" id="inputFirstName" type="text" placeholder="Enter your first name" />--%>
                                         <asp:TextBox runat="server" ID="inputFirstName" placeholder="Enter your first name" CssClass="form-control" />
                                         <asp:RequiredFieldValidator ErrorMessage="Required" ControlToValidate="inputFirstName" runat="server" CssClass="text-danger" />
-                                        <label for="inputFirstName">First name</label>
+                                        <label for="<%= inputFirstName.ClientID %>">First name</label>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
@@ -26,7 +26,7 @@
                                         <%--<input class="form-control" id="inputLastName" type="text" placeholder="Enter your last name" />--%>
                                         <asp:TextBox runat="server" ID="inputLastName" CssClass="form-control" placeholder="Enter your last name" />
                                         <asp:RequiredFieldValidator ErrorMessage="Required" ControlToValidate="inputLastName" runat="server" CssClass="text-danger" />
-                                        <label for="inputLastName">Last name</label>
+                                        <label for="<%= inputLastName.ClientID %>">Last name</label>
                                     </div>
                                 </div>
                             </div>
@@ -40,7 +40,7 @@
                                     ErrorMessage="Please enter a valid email address."
                                     Display="Dynamic"
                                     CssClass="text-danger" />
-                                <label for="inputEmail">Email address</label>
+                                <label for="<%= inputEmail.ClientID %>">Email address</label>
                             </div>
                             <div class="row mb-3">
                                 <div class="col-md-6">
@@ -48,7 +48,7 @@
                                         <%--<input class="form-control" id="inputPassword" type="password" placeholder="Create a password" />--%>
                                         <asp:TextBox runat="server" ID="inputPassword" TextMode="Password" CssClass="form-control" placeholder="Create a password" />
                                         <asp:RequiredFieldValidator ErrorMessage="Required" ControlToValidate="inputPassword" runat="server" CssClass="text-danger" />
-                                        <label for="inputPassword">Password</label>
+                                        <label for="<%= inputPassword.ClientID %>">Password</label>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
@@ -64,7 +64,7 @@
                                             ErrorMessage="Passwords do not match."
                                             Display="Dynamic"
                                             CssClass="text-danger" />
-                                        <label for="inputPasswordConfirm">Confirm Password</label>
+                                        <label for="<%= inputPasswordConfirm.ClientID %>">Confirm Password</label>
                                     </div>
                                 </div>
                             </div>

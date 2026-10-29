@@ -34,6 +34,7 @@ namespace HostelManagement
             }
 
             btnCreateRoom.Text = "Update Room";
+            Title = "Edit Room";
             txtRoomName.Text = room.RoomName;
             txtRent.Text = Convert.ToString(room.Rent);
             txtDescription.Text = room.Description;

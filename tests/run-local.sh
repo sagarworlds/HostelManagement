@@ -31,7 +31,7 @@ skip_or_fail() {
 
 # 1. Static checks: need only python3.
 if command -v python3 >/dev/null 2>&1; then
-  for check in check_csproj check_designers check_sql_parameters check_sql_comments check_markup check_webconfig; do
+  for check in check_csproj check_designers check_sql_parameters check_sql_comments check_markup check_page_rules check_webconfig; do
     run "static: $check" python3 "tests/static/$check.py"
   done
 else
@@ -62,6 +62,21 @@ if command -v node >/dev/null 2>&1 && command -v npm >/dev/null 2>&1; then
   run "browser: grid search" bash -c 'cd tests/js && npm ci --silent --no-audit --no-fund && node grid-search.test.js'
 else
   skip_or_fail "browser: grid search" "node/npm not found"
+fi
+
+# 5. End-to-end tests: the real pages in a browser, on Mono behind nginx, against the real SQL Server. Mono stands in for
+#    the .NET Framework here (see tests/e2e/stage_site.py for what that does and does not cover).
+#    Debian/Ubuntu: apt-get install mono-complete mono-fastcgi-server4 nginx
+missing=()
+for tool in dotnet mono fastcgi-mono-server4 nginx node npm python3 curl; do
+  command -v "$tool" >/dev/null 2>&1 || missing+=("$tool")
+done
+if [ "${#missing[@]}" -gt 0 ]; then
+  skip_or_fail "end-to-end: real pages" "missing: ${missing[*]}"
+elif [ -z "${HOSTELHUB_TEST_SQLSERVER:-}" ]; then
+  skip_or_fail "end-to-end: real pages" "HOSTELHUB_TEST_SQLSERVER is not set; run tests/start-sql-server.sh"
+else
+  run "end-to-end: real pages" tests/e2e/run.sh
 fi
 
 echo; echo "================ summary ================"

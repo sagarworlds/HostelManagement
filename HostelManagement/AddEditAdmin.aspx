@@ -1,4 +1,4 @@
-﻿<%@ Page Title="" Language="C#" MasterPageFile="~/Admin.Master" AutoEventWireup="true" CodeBehind="AddEditAdmin.aspx.cs" Inherits="HostelManagement.AddEditAdmin" %>
+﻿<%@ Page Title="Add Admin" Language="C#" MasterPageFile="~/Admin.Master" AutoEventWireup="true" CodeBehind="AddEditAdmin.aspx.cs" Inherits="HostelManagement.AddEditAdmin" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
 </asp:Content>
@@ -16,14 +16,14 @@
                                     <div class="form-floating mb-3 mb-md-0">
                                         <asp:TextBox runat="server" ID="inputFirstName" placeholder="Enter your first name" CssClass="form-control" />
                                         <asp:RequiredFieldValidator ErrorMessage="Required" ControlToValidate="inputFirstName" runat="server" CssClass="text-danger" />
-                                        <label for="inputFirstName">First name</label>
+                                        <label for="<%= inputFirstName.ClientID %>">First name</label>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-floating">
                                         <asp:TextBox runat="server" ID="inputLastName" CssClass="form-control" placeholder="Enter your last name" />
                                         <asp:RequiredFieldValidator ErrorMessage="Required" ControlToValidate="inputLastName" runat="server" CssClass="text-danger" />
-                                        <label for="inputLastName">Last name</label>
+                                        <label for="<%= inputLastName.ClientID %>">Last name</label>
                                     </div>
                                 </div>
                             </div>
@@ -36,14 +36,14 @@
                                     ErrorMessage="Please enter a valid email address."
                                     Display="Dynamic"
                                     CssClass="text-danger" />
-                                <label for="inputEmail">Email address</label>
+                                <label for="<%= inputEmail.ClientID %>">Email address</label>
                             </div>
                             <asp:Panel runat="server" ID="pnlPassword" CssClass="row mb-3">
                                 <div class="col-md-6">
                                     <div class="form-floating mb-3 mb-md-0">
                                         <asp:TextBox runat="server" ID="inputPassword" TextMode="Password" CssClass="form-control" placeholder="Create a password" />
                                         <asp:RequiredFieldValidator ErrorMessage="Required" ControlToValidate="inputPassword" runat="server" CssClass="text-danger" />
-                                        <label for="inputPassword">Password</label>
+                                        <label for="<%= inputPassword.ClientID %>">Password</label>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
@@ -58,7 +58,7 @@
                                             ErrorMessage="Passwords do not match."
                                             Display="Dynamic"
                                             CssClass="text-danger" />
-                                        <label for="inputPasswordConfirm">Confirm Password</label>
+                                        <label for="<%= inputPasswordConfirm.ClientID %>">Confirm Password</label>
                                     </div>
                                 </div>
                             </asp:Panel>

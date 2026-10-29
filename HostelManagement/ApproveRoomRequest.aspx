@@ -1,4 +1,4 @@
-﻿<%@ Page Title="" Language="C#" MasterPageFile="~/Admin.Master" AutoEventWireup="true" CodeBehind="ApproveRoomRequest.aspx.cs" Inherits="HostelManagement.ApproveRoomRequest" %>
+﻿<%@ Page Title="Review Request" Language="C#" MasterPageFile="~/Admin.Master" AutoEventWireup="true" CodeBehind="ApproveRoomRequest.aspx.cs" Inherits="HostelManagement.ApproveRoomRequest" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
 </asp:Content>
@@ -29,7 +29,7 @@
                     <asp:Label runat="server" ID="lblPreferredRoom" />
                     </p>
                     <p>
-                        Available Room:
+                        <label for="<%= ddlAvailableRooms.ClientID %>">Available Room:</label>
                     <asp:DropDownList runat="server" ID="ddlAvailableRooms" DataValueField="Id" DataTextField="RoomName" />
                     <asp:RequiredFieldValidator runat="server" ControlToValidate="ddlAvailableRooms" InitialValue="0"
                         ErrorMessage="Select a room." Display="Dynamic" CssClass="text-danger" ValidationGroup="approve" />

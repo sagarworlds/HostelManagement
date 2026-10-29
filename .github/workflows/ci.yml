@@ -2,7 +2,7 @@ name: CI (Linux)
 
 # Everything that does not need Windows, on a Linux runner: static checks, a compile of all C# against the
 # .NET Framework 4.8 reference assemblies, unit tests, the database tests against a real SQL Server (a service
-# container that lives only for this job), and the browser test of the grid script.
+# container that lives only for this job), the browser test of the grid script, and end-to-end tests of the real pages.
 # The Windows-only checks live in scripts/build-windows.ps1 (see windows-build.yml for the manual workflow).
 on:
   push:
@@ -13,7 +13,9 @@ permissions:
 
 jobs:
   checks:
-    runs-on: ubuntu-latest
+    # Pinned (not ubuntu-latest): the end-to-end tests need Mono's FastCGI server, which newer Ubuntu releases no longer
+    # package (ubuntu-latest has moved to 26.04, where `mono-fastcgi-server4` does not exist).
+    runs-on: ubuntu-24.04
 
     # The password protects nothing: the server exists for this job only and is reachable only from it. SQL Server
     # insists on a "complex" password, which is why it is not something simpler.
@@ -51,6 +53,13 @@ jobs:
 
       - name: Install the browser used by the grid-search test
         run: cd tests/js && npm ci --no-audit --no-fund && npx playwright install --with-deps chromium
+
+      # The end-to-end tests run the real pages in a browser on Mono behind nginx (tests/e2e/stage_site.py says what that
+      # covers and what it cannot).
+      - name: Install Mono and nginx for the end-to-end tests
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends mono-complete mono-fastcgi-server4 nginx
 
       - name: Run all Linux checks
         run: tests/run-local.sh --require-all
