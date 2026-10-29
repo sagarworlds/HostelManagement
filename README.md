@@ -17,16 +17,17 @@ A comprehensive web-based Hostel Management System built with **ASP.NET Web Form
 The system offers role-based access control with distinct features for Admins and Users:
 
 ### 👨‍💼 Admin Portal
-* **Dashboard:** Overview of system statistics and pending room requests.
+* **Dashboard:** Headline statistics (pending requests, total/available/occupied rooms, students, administrators) and the room requests, filterable by status.
 * **Room Management:** Add, edit, and delete rooms, see each room's status and current occupant, and vacate a room when a student leaves.
 * **Request Management:** Review, approve, or reject room allocation requests from users.
 * **Admin Management:** Add and manage other administrator accounts.
+* **Student Management:** View and edit student accounts, and issue a temporary password when a student is locked out (they must choose a new one at their next sign-in).
 
 ### 🎓 User Portal
 * **User Authentication:** Secure registration and login functionalities.
 * **Dashboard:** View current room status and announcements.
-* **Room Booking:** Browse available rooms and submit requests for room allocation.
-* **Account Settings:** Secure password reset and profile management.
+* **Room Booking:** Browse available rooms and ask for one (the administrator chooses the room), or submit a request with no preference.
+* **Account Settings:** Edit name and mobile number, and change the password (new passwords need at least 8 characters).
 
 ### 🔄 Room Request Lifecycle
 `Pending` → `Approved` / `Rejected` / `Cancelled`, and `Approved` → `Vacated`.
@@ -75,7 +76,7 @@ To run this project locally, you will need:
    * Open Microsoft SQL Server Management Studio (SSMS).
    * Run `Database\schema.sql` — it creates the `HMSDB` database and its tables.
    * Registration only creates students, so create the first administrator: follow the steps at the top of `Database\seed-admin.sql` (it explains how to generate the password hash) and run it.
-   * Already have an `HMSDB` database from an earlier version? Don't run `schema.sql`; run `Database\upgrade-existing-db.sql` instead, which is safe to repeat and ends with diagnostics for data that needs a manual look.
+   * Already have an `HMSDB` database from an earlier version? Don't run `schema.sql`; run `Database\upgrade-existing-db.sql` instead, which is safe to repeat and ends with diagnostics for data that needs a manual look. **Run it before deploying a newer version of the application:** newer versions read columns (`MustChangePassword`, `PreferredRoomId`) that older databases don't have, and sign-in fails — with a log entry saying the schema looks out of date — until they exist.
 
 3. **Configure Connection String**
    * Copy `HostelManagement\connectionStrings.config.example` to `HostelManagement\connectionStrings.config`.
@@ -91,8 +92,16 @@ To run this project locally, you will need:
    * Press `F5` or click **Start** to run the application in your browser.
    * Errors and sign-ins are logged to `HostelManagement\App_Data\Logs\` (one file per day, never served by IIS). The app pool identity needs write access to `App_Data`; if it has none, log entries fall back to `System.Diagnostics.Trace`.
 
-5. **Continuous Integration**
-   * Every push builds the solution and precompiles the `.aspx` pages on GitHub Actions (`.github/workflows/build.yml`).
+## ✅ Testing & CI
+
+Checks are split by what they need, so Windows-only work stays on a developer machine and only the cheap Linux checks run on GitHub.
+
+| Where | What | How |
+|---|---|---|
+| Any OS with Python, .NET 8 SDK, Node | Static checks (csproj lists every file, designer files match markup, SQL parameters and columns match, markup is well-formed and handlers exist), a compile of all C# against the .NET Framework 4.8 reference assemblies, unit tests, and a headless-browser test of the grid search script | `tests/run-local.sh` (add `--require-all` to fail instead of skip when a tool is missing) |
+| GitHub Actions, Linux (`.github/workflows/ci.yml`) | The same `tests/run-local.sh --require-all` on every push and pull request | automatic |
+| Windows with Visual Studio / Build Tools | MSBuild of the real web project and the ASPX precompile, which catches broken markup before run time | `powershell -ExecutionPolicy Bypass -File scripts\build-windows.ps1` |
+| GitHub Actions, Windows (`.github/workflows/windows-build.yml`) | The same Windows script, only when started by hand from the Actions tab | manual |
 
 ## 📸 Screenshots
 *(You can add screenshots of your Dashboard, Login Page, and Room Management here to make the repository more appealing)*
