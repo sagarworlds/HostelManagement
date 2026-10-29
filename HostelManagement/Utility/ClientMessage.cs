@@ -13,6 +13,9 @@ namespace HostelManagement
         private const string ScriptKey = "ClientMessage";
         private const string FlashSessionKey = "FlashMessage";
 
+        /// <summary>Shown when a read fails because the database is unavailable (the cause is already logged).</summary>
+        public const string ServiceUnavailable = "The service is temporarily unavailable. Please try again in a few minutes.";
+
         /// <summary>Shows <paramref name="message"/> when the current page finishes loading.</summary>
         public static void Show(Page page, string message)
         {

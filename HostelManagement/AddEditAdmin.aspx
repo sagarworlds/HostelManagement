@@ -5,7 +5,7 @@
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
     <main>
         <div class="container-fluid px-4">
-            <h1 class="mt-4" id="title" runat="server">Add/Edit Admin</h1>
+            <h1 class="mt-4" id="title" runat="server">Add Admin</h1>
             <div class="row justify-content-center">
                 <div class="col-lg-7">
                     <div class="card border-0 rounded-lg mt-5">

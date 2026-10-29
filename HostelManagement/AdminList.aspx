@@ -7,11 +7,11 @@
         <div class="container-fluid px-4">
             <h1 class="mt-4" runat="server" id="title">Admin List</h1>
             <div class="col-md-10 d-flex justify-content-end">
-                <asp:HyperLink NavigateUrl="~/AddEditAdmin.aspx" runat="server" CssClass="btn btn-primary" ID="hlAddnew" />
+                <asp:HyperLink NavigateUrl="~/AddEditAdmin.aspx" Text="Add Admin" runat="server" CssClass="btn btn-primary" ID="hlAddnew" />
             </div>
             <div class="row justify-content-center mt-3 ms-2 col-md-10">
                 <asp:GridView ID="gvAdmin" DataKeyNames="Id" runat="server" AutoGenerateColumns="false"
-                    CssClass="table table-bordered " ShowFooter="false" HeaderStyle-Font-Bold="true" OnRowDeleting="gvAdmin_RowDeleting">
+                    CssClass="table table-bordered " ShowFooter="false" HeaderStyle-Font-Bold="true" OnRowDeleting="gvAdmin_RowDeleting" EmptyDataText="No records found.">
                     <Columns>
                         <asp:TemplateField HeaderText="Name">
                             <ItemTemplate>

@@ -182,11 +182,13 @@
       <DependentUpon>UserMaster.Master</DependentUpon>
     </Compile>
     <Compile Include="Utility\Config.cs" />
+    <Compile Include="Utility\AppServices.cs" />
     <Compile Include="Utility\ClientMessage.cs" />
     <Compile Include="Utility\DBAccess.cs" />
     <Compile Include="Utility\DataAccessException.cs" />
     <Compile Include="Utility\FileLogger.cs" />
     <Compile Include="Utility\ILogger.cs" />
+    <Compile Include="Utility\IUserRepository.cs" />
     <Compile Include="Utility\OperationResult.cs" />
     <Compile Include="Utility\PasswordUtility.cs" />
     <Compile Include="Utility\RepositoryBase.cs" />

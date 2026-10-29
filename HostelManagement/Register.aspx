@@ -83,11 +83,4 @@
             </div>
         </div>
     </main>
-    <script>
-        overrideOnOk(function () {
-            document.location.href = "login.aspx";
-            // Add your custom logic here
-        });
-
-    </script>
 </asp:Content>

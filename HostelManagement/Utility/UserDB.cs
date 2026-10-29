@@ -1,235 +1,269 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using HostelManagement.Utility;
 
 namespace HostelManagement
 {
-    public class UserDB
+    /// <summary>SQL Server implementation of <see cref="IUserRepository"/>.</summary>
+    public class UserDB : RepositoryBase, IUserRepository
     {
-
-        public bool AddUser(User oUser)
+        public UserDB(ILogger logger) : base(logger)
         {
-            DBAccess oDBAccess = null;
-            int Id = 0;
-            try
-            {
-                oDBAccess = new DBAccess();
-                oUser.Password = PasswordUtility.HashPassword(oUser.Password);
-                string Insertstr = "INSERT INTO [dbo].[tbl_User]  ([Email],[Password],[UserType],[FirstName],[LastName],[MobileNo],[CreatedOn],[ModifiedOn])" +
-                    "  VALUES(@Email, @Password, @UserType,@FirstName,@LastName,@MobileNo,@CreatedOn,@ModifiedOn);Select cast(@@Identity as int);";
-
-                ArrayList oParameters = new ArrayList();
-                oParameters.Add(new SqlParameter { ParameterName = "@Email", Value = oUser.Email });
-                oParameters.Add(new SqlParameter { ParameterName = "@Password", Value = oUser.Password });
-                oParameters.Add(new SqlParameter { ParameterName = "@UserType", Value = oUser.UserType });
-                oParameters.Add(new SqlParameter { ParameterName = "@FirstName", Value = oUser.FirstName });
-                oParameters.Add(new SqlParameter { ParameterName = "@LastName", Value = oUser.LastName });
-                oParameters.Add(new SqlParameter { ParameterName = "@MobileNo", Value = oUser.MobileNo });
-                oParameters.Add(new SqlParameter { ParameterName = "@CreatedOn", Value = oUser.CreatedOn });
-                oParameters.Add(new SqlParameter { ParameterName = "@ModifiedOn", Value = oUser.ModifiedOn });
-
-                Id = oDBAccess.lfnExecuteScaler<int>(Insertstr, oParameters);
-            }
-            catch (Exception ex)
-            {
-                Id = 0;
-            }
-            finally
-            {
-                if (oDBAccess != null && oDBAccess.isConnectionOpen()) oDBAccess.CloseDB();
-            }
-            return Id > 0;
         }
-        public User Authenticate(User oUser)
+
+        public OperationResult AddUser(User user)
         {
-            DBAccess oDBAccess = null;
-            User user = null;
+            // Hash into a local so the caller's User object is not silently changed.
+            string passwordHash = PasswordUtility.HashPassword(user.Password);
+            const string sql =
+                "INSERT INTO dbo.tbl_User (Email, [Password], UserType, FirstName, LastName, MobileNo, CreatedOn, ModifiedOn) " +
+                "VALUES (@Email, @Password, @UserType, @FirstName, @LastName, @MobileNo, @CreatedOn, @ModifiedOn);";
+
             try
             {
-                oDBAccess = new DBAccess();
-                string sql = "SELECT Id, [Email],[Password],[UserType],[FirstName],[LastName],[MobileNo],[CreatedOn],[ModifiedOn] FROM [dbo].[tbl_User] " +
-                    "WHERE Email=@Email";
-
-                ArrayList oParameters = new ArrayList();
-                oParameters.Add(new SqlParameter { ParameterName = "@Email", Value = oUser.Email });
-                var oDataTable = oDBAccess.lfnGetDataTable(sql, oParameters);
-                if (oDataTable.Rows.Count > 0)
+                using (var db = new DBAccess())
                 {
-                    var row = oDataTable.Rows[0];
-                    string hashedPassword = Convert.ToString(row["Password"]);
-                    if (PasswordUtility.VerifyPassword(oUser.Password, hashedPassword))
-                    {
-                        user = new User();
-                        user.Id = Convert.ToInt32(row["Id"]);
-                        user.Email = Convert.ToString(row["Email"]);
-                        user.UserType = Convert.ToString(row["UserType"]);
-                        user.UserType = Convert.ToString(row["UserType"]);
-                        user.FirstName = Convert.ToString(row["FirstName"]);
-                        user.LastName = Convert.ToString(row["LastName"]);
-                        user.MobileNo = Convert.ToString(row["MobileNo"]);
-                    }
-                }
+                    int rows = db.lfnExecuteNonQuery(sql, Params(
+                        Param("@Email", user.Email),
+                        Param("@Password", passwordHash),
+                        Param("@UserType", user.UserType),
+                        Param("@FirstName", user.FirstName),
+                        Param("@LastName", user.LastName),
+                        Param("@MobileNo", user.MobileNo),
+                        Param("@CreatedOn", user.CreatedOn),
+                        Param("@ModifiedOn", user.ModifiedOn)));
 
-            }
-            catch (Exception ex)
-            {
-            }
-            finally
-            {
-                if (oDBAccess != null && oDBAccess.isConnectionOpen()) oDBAccess.CloseDB();
-            }
-            return user;
-        }
-        public bool EmailExists(User oUser)
-        {
-            DBAccess oDBAccess = null;
-            bool oResult = false;
-            try
-            {
-                oDBAccess = new DBAccess();
-                string sql = "SELECT  [Email],[Password],[UserType],[FirstName],[LastName],[MobileNo],[CreatedOn],[ModifiedOn] FROM [dbo].[tbl_User] " +
-                    "WHERE Email=@Email";
-
-                ArrayList oParameters = new ArrayList();
-                oParameters.Add(new SqlParameter { ParameterName = "@Email", Value = oUser.Email });
-                var oDataTable = oDBAccess.lfnGetDataTable(sql, oParameters);
-
-                oResult = oDataTable.Rows.Count > 0;
-            }
-            catch (Exception ex)
-            {
-            }
-            finally
-            {
-                if (oDBAccess != null && oDBAccess.isConnectionOpen()) oDBAccess.CloseDB();
-            }
-            return oResult;
-        }
-        public List<User> GetAdminList(string userType="Admin")
-        {
-            DBAccess oDBAccess = null;
-            List<User> oUserList = new List<User>();
-            try
-            {
-                oDBAccess = new DBAccess();
-                string sql = "SELECT Id,FirstName+' '+LastName AS UserName,Email FROM tbl_User Where UserType=@userType";
-                ArrayList oParameters = new ArrayList();
-                oParameters.Add(new SqlParameter { ParameterName = "@userType", Value = userType });
-                var oDataTable = oDBAccess.lfnGetDataTable(sql,oParameters);
-
-                for (int i = 0; i < oDataTable.Rows.Count; i++)
-                {
-                    var row = oDataTable.Rows[i];
-                    var oUser = new User();
-                    oUser.Id = Convert.ToInt32(row["Id"]);
-                    oUser.UserName = Convert.ToString(row["UserName"]);
-                    oUser.Email = Convert.ToString(row["Email"]);
-                    oUserList.Add(oUser);
+                    return rows == 1 ? OperationResult.Ok() : OperationResult.Fail(GenericWriteFailureMessage);
                 }
             }
-            catch (Exception ex)
+            catch (SqlException ex)
             {
+                // The unique index also closes the race between EmailExists and this insert.
+                if (IsUniqueViolation(ex))
+                    return OperationResult.Fail("An account with this email address already exists.");
 
+                return FailureResult("add user", ex);
             }
-            finally
-            {
-                if (oDBAccess != null && oDBAccess.isConnectionOpen()) oDBAccess.CloseDB();
-            }
-            return oUserList;
         }
-        public bool DeleteUser(int Id)
+
+        public OperationResult UpdateUser(User user)
         {
-            bool bresult = false;
-            DBAccess oDBAccess = null;
+            const string sql =
+                "UPDATE dbo.tbl_User SET Email = @Email, FirstName = @FirstName, LastName = @LastName, ModifiedOn = @ModifiedOn " +
+                "WHERE Id = @Id AND UserType = @UserType;";
+
             try
             {
-                oDBAccess = new DBAccess();
-                string DeleteStr = "Delete From tbl_User Where Id =@Id";
-
-                ArrayList oParameters = new ArrayList();
-                oParameters.Add(new SqlParameter { ParameterName = "@Id", SqlDbType = SqlDbType.Int, Value = Id });
-                oDBAccess.lfnUpdateData(DeleteStr, oParameters);
-                bresult = true;
-
-            }
-            catch (Exception ex)
-            {
-            }
-            finally
-            {
-                if (oDBAccess != null && oDBAccess.isConnectionOpen()) oDBAccess.CloseDB();
-            }
-            return bresult;
-        }
-        public bool DeleteAdminUser(int Id)
-        {
-            bool bresult = false;
-            DBAccess oDBAccess = null;
-            try
-            {
-                oDBAccess = new DBAccess();
-                string sql = "SELECT  * FROM [dbo].[tbl_User] where UserType='Admin'";
-                var oDataTable = oDBAccess.lfnGetDataTable(sql);
-
-                var oResult = oDataTable.Rows.Count > 1;
-                if (oResult)
+                using (var db = new DBAccess())
                 {
-                    string DeleteStr = "Delete From tbl_User Where Id =@Id";
-                    ArrayList oParameters = new ArrayList();
-                    oParameters.Add(new SqlParameter { ParameterName = "@Id", SqlDbType = SqlDbType.Int, Value = Id });
-                    oDBAccess.lfnUpdateData(DeleteStr, oParameters);
-                    bresult = true;
+                    int rows = db.lfnExecuteNonQuery(sql, Params(
+                        Param("@Email", user.Email),
+                        Param("@FirstName", user.FirstName),
+                        Param("@LastName", user.LastName),
+                        Param("@ModifiedOn", DateTime.Now),
+                        Param("@Id", user.Id),
+                        Param("@UserType", user.UserType)));
+
+                    return rows == 1 ? OperationResult.Ok() : OperationResult.Fail("This account no longer exists.");
                 }
             }
-            catch (Exception ex)
+            catch (SqlException ex)
             {
+                if (IsUniqueViolation(ex))
+                    return OperationResult.Fail("An account with this email address already exists.");
+
+                return FailureResult("update user " + user.Id, ex);
             }
-            finally
-            {
-                if (oDBAccess != null && oDBAccess.isConnectionOpen()) oDBAccess.CloseDB();
-            }
-            return bresult;
         }
 
-        public User GetUserById(int Id)
+        public User Authenticate(string email, string password)
         {
-            DBAccess oDBAccess = null;
-            User user = null;
+            const string sql =
+                "SELECT Id, Email, [Password], UserType, FirstName, LastName, MobileNo FROM dbo.tbl_User WHERE Email = @Email;";
+
             try
             {
-                oDBAccess = new DBAccess();
-                string sql = "SELECT Id, [Email],[Password],[UserType],[FirstName],[LastName],[MobileNo],[CreatedOn],[ModifiedOn] FROM [dbo].[tbl_User] " +
-                    "WHERE Id=@Id";
-
-                ArrayList oParameters = new ArrayList();
-                oParameters.Add(new SqlParameter { ParameterName = "@Id", Value = Id });
-                var oDataTable = oDBAccess.lfnGetDataTable(sql, oParameters);
-                if (oDataTable.Rows.Count > 0)
+                using (var db = new DBAccess())
                 {
-                    var row = oDataTable.Rows[0];
-                    user = new User();
-                    user.Id = Convert.ToInt32(row["Id"]);
-                    user.Email = Convert.ToString(row["Email"]);
-                    user.UserType = Convert.ToString(row["UserType"]);
-                    user.UserType = Convert.ToString(row["UserType"]);
-                    user.FirstName = Convert.ToString(row["FirstName"]);
-                    user.LastName = Convert.ToString(row["LastName"]);
-                    user.MobileNo = Convert.ToString(row["MobileNo"]);
-                }
+                    DataTable table = db.lfnGetDataTable(sql, Params(Param("@Email", email)));
+                    if (table.Rows.Count == 0)
+                        return null;
 
+                    DataRow row = table.Rows[0];
+                    if (!IsPasswordValid(password, Convert.ToString(row["Password"]), email))
+                        return null;
+
+                    return MapUser(row);
+                }
             }
-            catch (Exception ex)
+            catch (SqlException ex)
             {
+                throw Failure("authenticate user", ex);
             }
-            finally
-            {
-                if (oDBAccess != null && oDBAccess.isConnectionOpen()) oDBAccess.CloseDB();
-            }
-            return user;
         }
 
+        public bool EmailExists(string email, int excludeUserId)
+        {
+            const string sql = "SELECT COUNT(1) FROM dbo.tbl_User WHERE Email = @Email AND Id <> @ExcludeId;";
 
+            try
+            {
+                using (var db = new DBAccess())
+                {
+                    int count = db.lfnExecuteScaler<int>(sql, Params(
+                        Param("@Email", email),
+                        Param("@ExcludeId", excludeUserId)));
+
+                    return count > 0;
+                }
+            }
+            catch (SqlException ex)
+            {
+                throw Failure("check e-mail address", ex);
+            }
+        }
+
+        public List<User> GetUsersByType(string userType)
+        {
+            const string sql =
+                "SELECT Id, Email, UserType, FirstName, LastName, MobileNo FROM dbo.tbl_User " +
+                "WHERE UserType = @UserType ORDER BY FirstName, LastName;";
+
+            try
+            {
+                using (var db = new DBAccess())
+                {
+                    DataTable table = db.lfnGetDataTable(sql, Params(Param("@UserType", userType)));
+
+                    var users = new List<User>();
+                    foreach (DataRow row in table.Rows)
+                        users.Add(MapUser(row));
+
+                    return users;
+                }
+            }
+            catch (SqlException ex)
+            {
+                throw Failure("list " + userType + " accounts", ex);
+            }
+        }
+
+        public User GetUserById(int id)
+        {
+            const string sql =
+                "SELECT Id, Email, UserType, FirstName, LastName, MobileNo FROM dbo.tbl_User WHERE Id = @Id;";
+
+            try
+            {
+                using (var db = new DBAccess())
+                {
+                    DataTable table = db.lfnGetDataTable(sql, Params(Param("@Id", id)));
+                    return table.Rows.Count == 0 ? null : MapUser(table.Rows[0]);
+                }
+            }
+            catch (SqlException ex)
+            {
+                throw Failure("load user " + id, ex);
+            }
+        }
+
+        public OperationResult DeleteStudent(int id)
+        {
+            try
+            {
+                using (var db = new DBAccess())
+                {
+                    db.BeginTransaction();
+
+                    int students = db.lfnExecuteScaler<int>(
+                        "SELECT COUNT(1) FROM dbo.tbl_User WHERE Id = @Id AND UserType = @UserType;",
+                        Params(Param("@Id", id), Param("@UserType", UserTypes.Student)));
+                    if (students == 0)
+                        return OperationResult.Fail("This student no longer exists.");
+
+                    // Release the room this student holds, otherwise it would stay unavailable forever.
+                    db.lfnExecuteNonQuery(
+                        "UPDATE R SET R.Availability = 1, R.ModifiedOn = @Now " +
+                        "FROM dbo.tbl_Room R INNER JOIN dbo.tbl_RequestRoom RR ON RR.ApprovedRoomId = R.Id " +
+                        "WHERE RR.UserId = @Id AND RR.Status = @Approved;",
+                        Params(Param("@Now", DateTime.Now), Param("@Id", id), Param("@Approved", RequestStatus.Approved)));
+
+                    // Requests reference the student, so they must go before the account does.
+                    db.lfnExecuteNonQuery("DELETE FROM dbo.tbl_RequestRoom WHERE UserId = @Id;", Params(Param("@Id", id)));
+                    db.lfnExecuteNonQuery(
+                        "DELETE FROM dbo.tbl_User WHERE Id = @Id AND UserType = @UserType;",
+                        Params(Param("@Id", id), Param("@UserType", UserTypes.Student)));
+
+                    db.CommitTransaction();
+                    return OperationResult.Ok();
+                }
+            }
+            catch (SqlException ex)
+            {
+                // Leaving the using block rolls the transaction back.
+                return FailureResult("delete student " + id, ex);
+            }
+        }
+
+        public OperationResult DeleteAdmin(int id, int currentAdminId)
+        {
+            if (id == currentAdminId)
+                return OperationResult.Fail("You cannot delete the account you are signed in with.");
+
+            // One statement checks "not the last administrator" and deletes, so the rule cannot be bypassed by two
+            // administrators deleting each other at the same time (UPDLOCK/HOLDLOCK serialise the count).
+            const string sql =
+                "DELETE FROM dbo.tbl_User WHERE Id = @Id AND UserType = @Admin " +
+                "AND (SELECT COUNT(1) FROM dbo.tbl_User WITH (UPDLOCK, HOLDLOCK) WHERE UserType = @Admin) > 1;";
+
+            try
+            {
+                using (var db = new DBAccess())
+                {
+                    int rows = db.lfnExecuteNonQuery(sql, Params(Param("@Id", id), Param("@Admin", UserTypes.Admin)));
+
+                    return rows == 1
+                        ? OperationResult.Ok()
+                        : OperationResult.Fail("The administrator was not deleted: the account no longer exists, or it is the last remaining administrator.");
+                }
+            }
+            catch (SqlException ex)
+            {
+                return FailureResult("delete administrator " + id, ex);
+            }
+        }
+
+        private bool IsPasswordValid(string password, string storedHash, string email)
+        {
+            try
+            {
+                return PasswordUtility.VerifyPassword(password, storedHash);
+            }
+            catch (FormatException ex)
+            {
+                // A stored hash that is not Base64 means the row was damaged or written by something else.
+                Logger.Error("The stored password hash for '" + email + "' is malformed; this account cannot sign in.", ex);
+                return false;
+            }
+        }
+
+        private static User MapUser(DataRow row)
+        {
+            string firstName = Convert.ToString(row["FirstName"]);
+            string lastName = Convert.ToString(row["LastName"]);
+
+            return new User
+            {
+                Id = Convert.ToInt32(row["Id"]),
+                Email = Convert.ToString(row["Email"]),
+                UserType = Convert.ToString(row["UserType"]),
+                FirstName = firstName,
+                LastName = lastName,
+                MobileNo = Convert.ToString(row["MobileNo"]),
+                UserName = firstName + " " + lastName
+            };
+        }
     }
 }
