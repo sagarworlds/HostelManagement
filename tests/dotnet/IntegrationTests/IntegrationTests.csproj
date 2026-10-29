@@ -1,0 +1,79 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Runs the real repositories (UserDB, RoomDB, ...) against a real SQL Server, so the SQL itself is exercised: syntax,
+    column names, constraints, transactions and what happens when two administrators act at the same moment.
+    The source files are linked, not copied, so the tests always exercise the code that ships.
+
+    Needs the environment variable HOSTELHUB_TEST_SQLSERVER (see DatabaseFixture). tests/run-local.sh skips these tests
+    when it is not set; tests/start-sql-server.sh starts a disposable server with Docker.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <!-- Same obsolescence notes as the unit tests. System.Data.SqlClient is the provider the .NET Framework 4.8 web project
+         uses (CS0618 says to move to Microsoft.Data.SqlClient, which only applies to the package, not to the framework). -->
+    <NoWarn>$(NoWarn);SYSLIB0023;SYSLIB0041;NETSDK1188;NU1903;CS0618</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Database plumbing -->
+    <Compile Include="..\..\..\HostelManagement\Utility\Config.cs" Link="Linked\Config.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\DBAccess.cs" Link="Linked\DBAccess.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\RepositoryBase.cs" Link="Linked\RepositoryBase.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\DataAccessException.cs" Link="Linked\DataAccessException.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\OperationResult.cs" Link="Linked\OperationResult.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\ILogger.cs" Link="Linked\ILogger.cs" />
+
+    <!-- Repositories and their interfaces -->
+    <Compile Include="..\..\..\HostelManagement\Utility\UserDB.cs" Link="Linked\UserDB.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\RoomDB.cs" Link="Linked\RoomDB.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\RequestRoomDB.cs" Link="Linked\RequestRoomDB.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\DashboardDB.cs" Link="Linked\DashboardDB.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\PasswordResetDB.cs" Link="Linked\PasswordResetDB.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\AnnouncementDB.cs" Link="Linked\AnnouncementDB.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\IUserRepository.cs" Link="Linked\IUserRepository.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\IRoomRepository.cs" Link="Linked\IRoomRepository.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\IRequestRoomRepository.cs" Link="Linked\IRequestRoomRepository.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\IDashboardRepository.cs" Link="Linked\IDashboardRepository.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\IPasswordResetRepository.cs" Link="Linked\IPasswordResetRepository.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\IAnnouncementRepository.cs" Link="Linked\IAnnouncementRepository.cs" />
+
+    <!-- Models and constants -->
+    <Compile Include="..\..\..\HostelManagement\Utility\User.cs" Link="Linked\User.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\Room.cs" Link="Linked\Room.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\RequestRoom.cs" Link="Linked\RequestRoom.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\RequestStatus.cs" Link="Linked\RequestStatus.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\UserTypes.cs" Link="Linked\UserTypes.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\DashboardSummary.cs" Link="Linked\DashboardSummary.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\Announcement.cs" Link="Linked\Announcement.cs" />
+
+    <!-- Used by the repositories -->
+    <Compile Include="..\..\..\HostelManagement\Utility\PasswordUtility.cs" Link="Linked\PasswordUtility.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\SecureToken.cs" Link="Linked\SecureToken.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\PasswordResetService.cs" Link="Linked\PasswordResetService.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\IEmailSender.cs" Link="Linked\IEmailSender.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\EmailDeliveryException.cs" Link="Linked\EmailDeliveryException.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\SmtpSettings.cs" Link="Linked\SmtpSettings.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\RateLimiter.cs" Link="Linked\RateLimiter.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\PasswordPolicy.cs" Link="Linked\PasswordPolicy.cs" />
+  </ItemGroup>
+
+  <!-- The schema and upgrade scripts are test inputs: the tests run the very files that users run. -->
+  <ItemGroup>
+    <Content Include="..\..\..\Database\*.sql" Link="Database\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <!-- What the first version of the application would have left in a database: input for the upgrade-script tests. -->
+    <Content Include="OldSchemas\*.sql" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" PrivateAssets="all" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.9.0" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="8.0.1" />
+  </ItemGroup>
+
+</Project>
