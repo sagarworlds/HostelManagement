@@ -13,7 +13,9 @@ permissions:
 
 jobs:
   checks:
-    runs-on: ubuntu-latest
+    # Pinned (not ubuntu-latest): the end-to-end tests need Mono's FastCGI server, which newer Ubuntu releases no longer
+    # package (ubuntu-latest has moved to 26.04, where `mono-fastcgi-server4` does not exist).
+    runs-on: ubuntu-24.04
 
     # The password protects nothing: the server exists for this job only and is reachable only from it. SQL Server
     # insists on a "complex" password, which is why it is not something simpler.
