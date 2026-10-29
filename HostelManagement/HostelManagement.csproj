@@ -183,18 +183,22 @@
     </Compile>
     <Compile Include="Utility\Config.cs" />
     <Compile Include="Utility\AppServices.cs" />
+    <Compile Include="Utility\AccessGuard.cs" />
     <Compile Include="Utility\ClientMessage.cs" />
     <Compile Include="Utility\DBAccess.cs" />
     <Compile Include="Utility\DataAccessException.cs" />
     <Compile Include="Utility\FileLogger.cs" />
+    <Compile Include="Utility\GridViewExtensions.cs" />
     <Compile Include="Utility\ILogger.cs" />
     <Compile Include="Utility\IRequestRoomRepository.cs" />
     <Compile Include="Utility\IRoomRepository.cs" />
     <Compile Include="Utility\IUserRepository.cs" />
     <Compile Include="Utility\OperationResult.cs" />
+    <Compile Include="Utility\PasswordPolicy.cs" />
     <Compile Include="Utility\PasswordUtility.cs" />
     <Compile Include="Utility\RepositoryBase.cs" />
     <Compile Include="Utility\RequestStatus.cs" />
+    <Compile Include="Utility\TemporaryPassword.cs" />
     <Compile Include="Utility\RequestRoom.cs" />
     <Compile Include="Utility\RequestRoomDB.cs" />
     <Compile Include="Utility\Room.cs" />

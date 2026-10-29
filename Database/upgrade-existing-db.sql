@@ -4,6 +4,10 @@
     Safe to run more than once. It only touches rows/objects that need correcting, and finishes with
     read-only diagnostics for problems that need a human decision.
 
+    Run it BEFORE deploying a newer version of the application: steps 5 and 6 add columns that the
+    current code reads, and sign-in and the request pages fail (and log "schema looks out of date")
+    until they exist.
+
     Background: earlier versions of the application never set tbl_Room.Availability when a room was
     created, never recorded when a room became free again, and did not stop a room from being
     approved twice.
@@ -45,6 +49,22 @@ GO
 
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_tbl_RequestRoom_ApprovedRoomId' AND object_id = OBJECT_ID(N'dbo.tbl_RequestRoom'))
     CREATE INDEX IX_tbl_RequestRoom_ApprovedRoomId ON dbo.tbl_RequestRoom (ApprovedRoomId) INCLUDE (Status);
+GO
+
+/* 5. Forced password change after an administrator resets a password. */
+IF COL_LENGTH(N'dbo.tbl_User', N'MustChangePassword') IS NULL
+    ALTER TABLE dbo.tbl_User ADD MustChangePassword BIT NOT NULL
+        CONSTRAINT DF_tbl_User_MustChangePassword DEFAULT (0);
+GO
+
+/* 6. The room a student asks for when requesting (a preference; the administrator decides). */
+IF COL_LENGTH(N'dbo.tbl_RequestRoom', N'PreferredRoomId') IS NULL
+    ALTER TABLE dbo.tbl_RequestRoom ADD PreferredRoomId INT NULL;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = N'FK_tbl_RequestRoom_PreferredRoom')
+    ALTER TABLE dbo.tbl_RequestRoom ADD CONSTRAINT FK_tbl_RequestRoom_PreferredRoom
+        FOREIGN KEY (PreferredRoomId) REFERENCES dbo.tbl_Room (Id);
 GO
 
 /* ---------------------------------------------------------------------------------------------

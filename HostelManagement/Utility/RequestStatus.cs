@@ -1,3 +1,5 @@
+using System;
+
 namespace HostelManagement.Utility
 {
     /// <summary>
@@ -11,5 +13,14 @@ namespace HostelManagement.Utility
         public const string Rejected = "Rejected";
         public const string Cancelled = "Cancelled";
         public const string Vacated = "Vacated";
+
+        /// <summary>Every status, in lifecycle order.</summary>
+        public static readonly string[] All = { Pending, Approved, Rejected, Cancelled, Vacated };
+
+        /// <summary>True for a value this application stores; use it to vet untrusted input such as a filter selection.</summary>
+        public static bool IsKnown(string status)
+        {
+            return Array.IndexOf(All, status) >= 0;
+        }
     }
 }

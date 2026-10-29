@@ -22,6 +22,8 @@ GO
 /* ---------------------------------------------------------------------------------------------
    tbl_User - administrators and students.
    Password holds Base64(salt[16] + PBKDF2 hash[20]) produced by PasswordUtility (48 characters).
+   MustChangePassword is set when an administrator resets the password; the user is then held on
+   the profile page until they choose a new one.
    --------------------------------------------------------------------------------------------- */
 IF OBJECT_ID(N'dbo.tbl_User', N'U') IS NULL
 BEGIN
@@ -34,6 +36,7 @@ BEGIN
         FirstName   NVARCHAR(100)      NOT NULL,
         LastName    NVARCHAR(100)      NOT NULL,
         MobileNo    NVARCHAR(20)       NULL,
+        MustChangePassword BIT         NOT NULL CONSTRAINT DF_tbl_User_MustChangePassword DEFAULT (0),
         CreatedOn   DATETIME           NOT NULL,
         ModifiedOn  DATETIME           NOT NULL,
         CONSTRAINT UQ_tbl_User_Email UNIQUE (Email),
@@ -72,6 +75,9 @@ GO
        Approved  -> Vacated
    ApprovedRoomId is set while the request is Approved and kept as history after Vacated; it is
    cleared automatically if the room row is deleted (ON DELETE SET NULL).
+   PreferredRoomId is the room the student asked for; it is only a preference, the administrator
+   chooses the room. SQL Server does not allow a second cascading foreign key to the same table, so
+   deleting a room clears this column in the application (RoomDB.DeleteRoom), inside one transaction.
    A student's requests must be deleted before the student row (the application does this inside
    one transaction), hence no cascade on UserId.
    --------------------------------------------------------------------------------------------- */
@@ -82,6 +88,7 @@ BEGIN
         Id             INT IDENTITY(1, 1) NOT NULL CONSTRAINT PK_tbl_RequestRoom PRIMARY KEY,
         UserId         INT                NOT NULL,
         ApprovedRoomId INT                NULL,
+        PreferredRoomId INT               NULL,
         [Status]       NVARCHAR(20)       NOT NULL CONSTRAINT DF_tbl_RequestRoom_Status DEFAULT (N'Pending'),
         CreatedOn      DATETIME           NOT NULL,
         ModifiedOn     DATETIME           NULL,
@@ -90,6 +97,7 @@ BEGIN
         ResponseDate   DATETIME           NULL,
         CONSTRAINT FK_tbl_RequestRoom_User FOREIGN KEY (UserId) REFERENCES dbo.tbl_User (Id),
         CONSTRAINT FK_tbl_RequestRoom_Room FOREIGN KEY (ApprovedRoomId) REFERENCES dbo.tbl_Room (Id) ON DELETE SET NULL,
+        CONSTRAINT FK_tbl_RequestRoom_PreferredRoom FOREIGN KEY (PreferredRoomId) REFERENCES dbo.tbl_Room (Id),
         CONSTRAINT CK_tbl_RequestRoom_Status CHECK ([Status] IN (N'Pending', N'Approved', N'Rejected', N'Cancelled', N'Vacated'))
     );
 END
