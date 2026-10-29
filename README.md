@@ -18,7 +18,7 @@ The system offers role-based access control with distinct features for Admins an
 
 ### 👨‍💼 Admin Portal
 * **Dashboard:** Overview of system statistics and pending room requests.
-* **Room Management:** Add, edit, and manage hostel rooms.
+* **Room Management:** Add, edit, and delete rooms, see each room's status and current occupant, and vacate a room when a student leaves.
 * **Request Management:** Review, approve, or reject room allocation requests from users.
 * **Admin Management:** Add and manage other administrator accounts.
 
@@ -27,6 +27,12 @@ The system offers role-based access control with distinct features for Admins an
 * **Dashboard:** View current room status and announcements.
 * **Room Booking:** Browse available rooms and submit requests for room allocation.
 * **Account Settings:** Secure password reset and profile management.
+
+### 🔄 Room Request Lifecycle
+`Pending` → `Approved` / `Rejected` / `Cancelled`, and `Approved` → `Vacated`.
+* A student can hold **one** pending request or one allocated room at a time, and can cancel a request while it is pending.
+* Approving a request allocates a free room in a single transaction; if another administrator took the room (or decided the request) first, nothing changes and the admin is told why.
+* Vacating a room ends the allocation and returns the room to the available pool.
 
 ## 🛠️ Technology Stack
 
@@ -83,6 +89,10 @@ To run this project locally, you will need:
    * Open `HostelManagement.sln` in Visual Studio.
    * Restore any NuGet packages if prompted.
    * Press `F5` or click **Start** to run the application in your browser.
+   * Errors and sign-ins are logged to `HostelManagement\App_Data\Logs\` (one file per day, never served by IIS). The app pool identity needs write access to `App_Data`; if it has none, log entries fall back to `System.Diagnostics.Trace`.
+
+5. **Continuous Integration**
+   * Every push builds the solution and precompiles the `.aspx` pages on GitHub Actions (`.github/workflows/build.yml`).
 
 ## 📸 Screenshots
 *(You can add screenshots of your Dashboard, Login Page, and Room Management here to make the repository more appealing)*
