@@ -36,7 +36,7 @@
             </div>
 
         <asp:GridView ID="gvRoomsRequest" DataKeyNames="Id" runat="server" AutoGenerateColumns="false"
-            CssClass="table table-bordered " ShowFooter="false" HeaderStyle-Font-Bold="true" EmptyDataText="There are no room requests.">
+            CssClass="table table-bordered js-datatable" ShowFooter="false" HeaderStyle-Font-Bold="true" EmptyDataText="There are no room requests.">
             <Columns>
                 <asp:TemplateField HeaderText="Request ID">
                     <ItemTemplate>

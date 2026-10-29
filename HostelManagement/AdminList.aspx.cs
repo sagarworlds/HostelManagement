@@ -35,6 +35,7 @@ namespace HostelManagement
         {
             gvAdmin.DataSource = _users.GetUsersByType(UserType);
             gvAdmin.DataBind();
+            gvAdmin.RenderHeaderInThead();
         }
 
         protected void gvAdmin_RowCommand(object sender, GridViewCommandEventArgs e)

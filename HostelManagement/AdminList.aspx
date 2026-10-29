@@ -11,7 +11,7 @@
             </div>
             <div class="row justify-content-center mt-3 ms-2 col-md-10">
                 <asp:GridView ID="gvAdmin" DataKeyNames="Id" runat="server" AutoGenerateColumns="false"
-                    CssClass="table table-bordered " ShowFooter="false" HeaderStyle-Font-Bold="true" OnRowDeleting="gvAdmin_RowDeleting" OnRowCommand="gvAdmin_RowCommand" EmptyDataText="No records found.">
+                    CssClass="table table-bordered js-datatable" ShowFooter="false" HeaderStyle-Font-Bold="true" OnRowDeleting="gvAdmin_RowDeleting" OnRowCommand="gvAdmin_RowCommand" EmptyDataText="No records found.">
                     <Columns>
                         <asp:TemplateField HeaderText="Name">
                             <ItemTemplate>

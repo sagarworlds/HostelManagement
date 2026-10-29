@@ -15,7 +15,7 @@
         </div>
         <div class="row justify-content-center mt-3 ms-2 col-md-10">
             <asp:GridView ID="gvRooms" DataKeyNames="Id" runat="server" AutoGenerateColumns="false"
-                CssClass="table table-bordered " ShowFooter="false" HeaderStyle-Font-Bold="true" OnRowDeleting="gvRooms_RowDeleting" OnRowCommand="gvRooms_RowCommand" EmptyDataText="No rooms have been added yet.">
+                CssClass="table table-bordered js-datatable" ShowFooter="false" HeaderStyle-Font-Bold="true" OnRowDeleting="gvRooms_RowDeleting" OnRowCommand="gvRooms_RowCommand" EmptyDataText="No rooms have been added yet.">
                 <Columns>
 
                     <asp:TemplateField HeaderText="Room No">

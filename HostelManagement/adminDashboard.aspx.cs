@@ -52,6 +52,7 @@ namespace HostelManagement
 
             gvRoomsRequest.DataSource = _requests.GetRoomRequestList(status);
             gvRoomsRequest.DataBind();
+            gvRoomsRequest.RenderHeaderInThead();
         }
     }
 }

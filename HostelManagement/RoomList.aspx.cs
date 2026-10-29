@@ -21,6 +21,7 @@ namespace HostelManagement
         {
             gvRooms.DataSource = _rooms.GetRoomList();
             gvRooms.DataBind();
+            gvRooms.RenderHeaderInThead();
         }
 
         protected void gvRooms_RowDeleting(object sender, GridViewDeleteEventArgs e)

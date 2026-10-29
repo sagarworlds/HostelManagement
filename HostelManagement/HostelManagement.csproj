@@ -74,7 +74,7 @@
     <Content Include="AdminList.aspx" />
     <Content Include="ApproveRoomRequest.aspx" />
     <Content Include="css\styles.css" />
-    <Content Include="js\datatables-simple-demo.js" />
+    <Content Include="js\grid-search.js" />
     <Content Include="js\scripts.js" />
     <Content Include="Login.aspx" />
     <Content Include="MyProfile.aspx" />
