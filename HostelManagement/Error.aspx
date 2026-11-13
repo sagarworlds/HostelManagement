@@ -3,15 +3,20 @@
 <script runat="server">
     protected void Page_Load(System.Object sender, System.EventArgs e)
     {
-        // The page is served in place of the failing one (ResponseRewrite), so say honestly that it failed.
-        bool notFound = Request.QueryString["code"] == "404";
-        Response.StatusCode = notFound ? 404 : 500;
+        // The page is served in place of the failing one (ResponseRewrite), so say honestly what happened.
+        string code = Request.QueryString["code"];
+        bool notFound = code == "404";
+        bool rejected = code == "400";   // ASP.NET refused something the visitor typed (Global.asax.cs sends them here)
+        Response.StatusCode = notFound ? 404 : rejected ? 400 : 500;
         Response.TrySkipIisCustomErrors = true;
-        Title = notFound ? "Page not found" : "Something went wrong";
+        Title = notFound ? "Page not found" : rejected ? "That text cannot be accepted" : "Something went wrong";
         heading.InnerText = Title;
         message.InnerText = notFound
             ? "The page you asked for does not exist."
-            : "Sorry, something went wrong on our side. The problem has been recorded. Please try again in a moment.";
+            : rejected
+                ? "Something you typed cannot be accepted: text that contains HTML tags (for example <b> or <script>) is refused for safety. Please go back, take it out and try again."
+                : "Sorry, something went wrong on our side. The problem has been recorded. Please try again in a moment.";
+        goBack.Visible = rejected;
     }
 </script>
 <!DOCTYPE html>
@@ -33,6 +38,7 @@
                         </div>
                         <div class="card-body">
                             <p id="message" runat="server"></p>
+                            <a id="goBack" runat="server" visible="false" class="btn btn-secondary me-2" href="javascript:history.back()">Go back</a>
                             <a class="btn btn-primary" href="<%= ResolveUrl("~/Login.aspx") %>">Back to sign in</a>
                         </div>
                     </div>

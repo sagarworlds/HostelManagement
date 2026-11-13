@@ -35,12 +35,27 @@
     <Compile Include="..\..\..\HostelManagement\Utility\SmtpSettings.cs" Link="Linked\SmtpSettings.cs" />
     <Compile Include="..\..\..\HostelManagement\Utility\PasswordResetService.cs" Link="Linked\PasswordResetService.cs" />
     <Compile Include="..\..\..\HostelManagement\Utility\LoginAttemptPolicy.cs" Link="Linked\LoginAttemptPolicy.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\LogRetention.cs" Link="Linked\LogRetention.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\ExpectedSchema.cs" Link="Linked\ExpectedSchema.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\SchemaCheckResult.cs" Link="Linked\SchemaCheckResult.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\ISchemaVerifier.cs" Link="Linked\ISchemaVerifier.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\StartupChecks.cs" Link="Linked\StartupChecks.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\HealthCheck.cs" Link="Linked\HealthCheck.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\DataAccessException.cs" Link="Linked\DataAccessException.cs" />
+  </ItemGroup>
+
+  <!-- The web project's configuration files, for ReleaseTransformTests: the test runs the very files that get published. -->
+  <ItemGroup>
+    <Content Include="..\..\..\HostelManagement\Web.config" Link="WebConfig\Web.config" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\..\HostelManagement\Web.Release.config" Link="WebConfig\Web.Release.config" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
     <PackageReference Include="xunit" Version="2.9.2" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" PrivateAssets="all" />
+    <!-- The engine behind Web.Release.config (Visual Studio and MSBuild use the same library when publishing). -->
+    <PackageReference Include="Microsoft.Web.Xdt" Version="3.1.0" />
   </ItemGroup>
 
 </Project>

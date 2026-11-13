@@ -67,5 +67,23 @@ namespace HostelManagement
         {
             return new RequestRoomDB(Logger());
         }
+
+        /// <summary>Checks the database against what this version of the application needs.</summary>
+        public static ISchemaVerifier Schema()
+        {
+            return new SchemaVerifier(Logger());
+        }
+
+        /// <summary>What the application looks at, and logs, once when it starts.</summary>
+        public static StartupChecks Startup()
+        {
+            return new StartupChecks(Logger(), Schema(), Config.LogRetentionProblem);
+        }
+
+        /// <summary>The yes-or-no behind the health page that monitors call.</summary>
+        public static HealthCheck Health()
+        {
+            return new HealthCheck(Schema(), Logger());
+        }
     }
 }

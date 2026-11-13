@@ -62,6 +62,21 @@ namespace HostelManagement
             get { return ReadConfigKey("LogFileName", "log1"); }
         }
 
+        /// <summary>
+        /// Days of daily log files to keep ("LogRetentionDays"); 0 keeps every file. 90 when the setting is absent or is
+        /// not a whole number (<see cref="LogRetentionProblem"/> says so at start-up).
+        /// </summary>
+        public static int LogRetentionDays
+        {
+            get { return LogRetention.ParseSetting(ConfigurationManager.AppSettings["LogRetentionDays"]).Days; }
+        }
+
+        /// <summary>What is wrong with the "LogRetentionDays" setting, or null when it is fine.</summary>
+        public static string LogRetentionProblem
+        {
+            get { return LogRetention.ParseSetting(ConfigurationManager.AppSettings["LogRetentionDays"]).Problem; }
+        }
+
         public static string TempContentPath
         {
             get { return ReadConfigKey("tempContentPath", "C:\\Temp"); }

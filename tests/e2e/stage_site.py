@@ -15,11 +15,14 @@ What this means for the results:
   * Anything specific to IIS or the .NET Framework runtime is not exercised; scripts/build-windows.ps1 and a real
     deployment remain the authority for those.
 
-Usage: stage_site.py --out DIR --sql-server "Server=...;User Id=...;Password=..."   (needs the .NET SDK to compile)
+Usage: stage_site.py --out DIR --sql-server "Server=...;..."   (needs the .NET SDK to compile)
 
-The site is pointed at the database HMSDB_E2E on that server, never at HMSDB.
+The site is pointed at the database HMSDB_E2E on that server, never at HMSDB, and signs in as the application login named
+by the environment variables E2E_APP_LOGIN and E2E_APP_PASSWORD (tests/e2e/run.sh invents them), not as the administrator
+in --sql-server: the pages are tested with the privileges the deployment guide recommends.
 """
 import argparse
+import os
 import pathlib
 import re
 import shutil
@@ -91,6 +94,15 @@ def with_database(connection_string, database):
     kept = [part for part in connection_string.split(";")
             if part.strip() and part.split("=")[0].strip().lower() not in ("initial catalog", "database")]
     return ";".join(kept + ["Initial Catalog=" + database])
+
+
+def with_credentials(connection_string, login, password):
+    """The connection string signing in as the given SQL login (replacing whoever it named before)."""
+    if any(ch in password + login for ch in ';="\''):
+        sys.exit("stage_site: the login and password may not contain ; = or quotes (they go into a connection string).")
+    kept = [part for part in connection_string.split(";")
+            if part.strip() and part.split("=")[0].strip().lower() not in ("user id", "uid", "user", "password", "pwd")]
+    return ";".join(kept + ["User Id=" + login, "Password=" + password])
 
 
 def adapt_exactly_once(text, pattern, replacement, what, flags=0):
@@ -171,7 +183,11 @@ def main():
     parser.add_argument("--out", required=True, type=pathlib.Path)
     parser.add_argument("--sql-server", required=True, help="connection string of the SQL Server to use")
     args = parser.parse_args()
-    stage(args.out.resolve(), with_database(args.sql_server, DATABASE))
+    login, password = os.environ.get("E2E_APP_LOGIN"), os.environ.get("E2E_APP_PASSWORD")
+    if not login or not password:
+        sys.exit("stage_site: set E2E_APP_LOGIN and E2E_APP_PASSWORD (tests/e2e/run.sh does).")
+    connection_string = with_credentials(with_database(args.sql_server, DATABASE), login, password)
+    stage(args.out.resolve(), connection_string)
 
 
 if __name__ == "__main__":

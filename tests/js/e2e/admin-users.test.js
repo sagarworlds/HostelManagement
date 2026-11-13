@@ -74,15 +74,18 @@ describe('administrator: students', () => {
     let temporary;
     await asAdmin(browser, async ({ page, dialogs }) => {
       await page.goto(url('AdminList.aspx?UserType=Student'));
-      await Promise.all([page.waitForNavigation(), page.click('a[title="Reset password"]')]);
+      const [response] = await Promise.all([page.waitForNavigation(), page.click('a[title="Reset password"]')]);
       assert.deepEqual(dialogs, ['Reset the password for this student? A temporary password will be generated.']);
+      // Post, redirect, get: the page that shows the password is fetched with GET, so refreshing it cannot send the reset again.
+      assert.equal(response.request().method(), 'GET');
+      assert.equal(response.request().redirectedFrom().method(), 'POST');
       const message = await alertText(page);
       const found = /^Temporary password for Ann Student: (\S+)\s+-\s+give it to the student\. They must choose a new password when they sign in\. It will not be shown again\.$/.exec(message);
       assert.ok(found, 'unexpected message: ' + message);
       temporary = found[1];
       assert.ok(temporary.length >= 8);
-      await page.goto(url('AdminList.aspx?UserType=Student'));   // a GET: reloading would repeat the reset
-      assert.equal(await page.locator('#modal-alert.show').count(), 0);
+      await page.reload();   // would have made a second temporary password, and the first would stop working
+      assert.equal(await page.locator('#modal-alert.show').count(), 0, 'the password is shown once');
     });
 
     await withSession(browser, async ({ page }) => {
@@ -272,7 +275,8 @@ describe('administrator: announcements', () => {
       await page.fill('[id$="txtTitle"]', '<script>alert(1)</script>');
       await page.fill('[id$="txtBody"]', 'x');
       const [response] = await Promise.all([page.waitForNavigation(), page.click('[id$="btnPost"]')]);
-      assert.equal(response.status(), 500, 'ASP.NET request validation refuses it');
+      assert.equal(response.status(), 400, 'ASP.NET request validation refuses it, and the visitor is told so');
+      assert.match(await page.title(), /cannot be accepted/);
     });
     assert.equal((await db.sql('SELECT COUNT(1) AS n FROM dbo.tbl_Announcement'))[0].n, 0);
   });

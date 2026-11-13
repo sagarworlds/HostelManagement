@@ -38,6 +38,41 @@ namespace HostelManagement.IntegrationTests
             Assert.Equal(1, Data.Scalar<int>("SELECT COUNT(1) FROM dbo.tbl_User WHERE Id = @Id;", new SqlParameter("@Id", student)));
         }
 
+        private const byte FullRecovery = 1;
+        private const byte SimpleRecovery = 3;
+
+        private byte RecoveryModel()
+        {
+            return Data.Scalar<byte>("SELECT recovery_model FROM sys.databases WHERE name = @Name;", new SqlParameter("@Name", DatabaseFixture.TestDatabase));
+        }
+
+        [Fact]
+        public void A_database_the_script_creates_uses_the_simple_recovery_model_so_its_log_cannot_grow_without_end()
+        {
+            // The database under test was created by schema.sql when the fixture was built.
+            Assert.Equal(SimpleRecovery, RecoveryModel());
+        }
+
+        [Fact]
+        public void Running_schema_sql_again_leaves_the_recovery_model_of_an_existing_database_alone()
+        {
+            // Put back whatever it was, not what it should have been: a test that "fixes" the shared database afterwards
+            // would hide the very fault the test above is there to find.
+            byte original = RecoveryModel();
+            Data.Execute("ALTER DATABASE [" + DatabaseFixture.TestDatabase + "] SET RECOVERY FULL;");
+            try
+            {
+                SqlScript.Run(Database.ServerConnectionString, Retargeted("schema.sql"));
+
+                Assert.Equal(FullRecovery, RecoveryModel());
+            }
+            finally
+            {
+                string name = original == FullRecovery ? "FULL" : original == SimpleRecovery ? "SIMPLE" : "BULK_LOGGED";
+                Data.Execute("ALTER DATABASE [" + DatabaseFixture.TestDatabase + "] SET RECOVERY " + name + ";");
+            }
+        }
+
         [Fact]
         public void Only_known_account_types_and_request_statuses_are_accepted()
         {

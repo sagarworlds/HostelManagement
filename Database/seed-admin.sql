@@ -24,7 +24,9 @@ DECLARE @FirstName    NVARCHAR(100) = N'System';
 DECLARE @LastName     NVARCHAR(100) = N'Administrator';
 DECLARE @PasswordHash NVARCHAR(128) = N'PASTE_HASH_HERE';
 
-IF @PasswordHash = N'PASTE_HASH_HERE'
+-- Recognised by its shape rather than by repeating the placeholder text, so "Replace All" in an editor cannot
+-- accidentally change this check as well.
+IF @PasswordHash LIKE N'PASTE[_]%'
     THROW 50000, 'Replace @PasswordHash with a hash generated as described at the top of this script.', 1;
 
 IF EXISTS (SELECT 1 FROM dbo.tbl_User WHERE Email = @Email)

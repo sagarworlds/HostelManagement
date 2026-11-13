@@ -18,4 +18,9 @@
   <add key="Smtp.Password" value="YOUR_SMTP_PASSWORD" />
   <add key="Smtp.FromAddress" value="no-reply@example.com" />
   <add key="Smtp.FromName" value="HostelHub" />
+
+  <!-- Optional, and nothing to do with mail: any setting can go in this file. Days of daily log files (App_Data\Logs) to
+       keep before they are deleted; 0 keeps every file. Without this line 90 days are kept. The logs hold e-mail
+       addresses, so keep them no longer than you need. -->
+  <!-- <add key="LogRetentionDays" value="90" /> -->
 </appSettings>

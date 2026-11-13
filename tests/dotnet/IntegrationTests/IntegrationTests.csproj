@@ -26,6 +26,11 @@
     <Compile Include="..\..\..\HostelManagement\Utility\DataAccessException.cs" Link="Linked\DataAccessException.cs" />
     <Compile Include="..\..\..\HostelManagement\Utility\OperationResult.cs" Link="Linked\OperationResult.cs" />
     <Compile Include="..\..\..\HostelManagement\Utility\ILogger.cs" Link="Linked\ILogger.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\LogRetention.cs" Link="Linked\LogRetention.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\ExpectedSchema.cs" Link="Linked\ExpectedSchema.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\SchemaCheckResult.cs" Link="Linked\SchemaCheckResult.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\ISchemaVerifier.cs" Link="Linked\ISchemaVerifier.cs" />
+    <Compile Include="..\..\..\HostelManagement\Utility\SchemaVerifier.cs" Link="Linked\SchemaVerifier.cs" />
 
     <!-- Repositories and their interfaces -->
     <Compile Include="..\..\..\HostelManagement\Utility\UserDB.cs" Link="Linked\UserDB.cs" />

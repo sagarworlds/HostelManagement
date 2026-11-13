@@ -89,6 +89,7 @@
     <Content Include="Error.aspx" />
     <Content Include="ForgotPassword.aspx" />
     <Content Include="Global.asax" />
+    <Content Include="Health.ashx" />
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
@@ -126,6 +127,9 @@
     </Compile>
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
+    </Compile>
+    <Compile Include="Health.ashx.cs">
+      <DependentUpon>Health.ashx</DependentUpon>
     </Compile>
     <Compile Include="AdminList.aspx.designer.cs">
       <DependentUpon>AdminList.aspx</DependentUpon>
@@ -235,6 +239,13 @@
     <Compile Include="Utility\DashboardSummary.cs" />
     <Compile Include="Utility\DataAccessException.cs" />
     <Compile Include="Utility\FileLogger.cs" />
+    <Compile Include="Utility\LogRetention.cs" />
+    <Compile Include="Utility\ExpectedSchema.cs" />
+    <Compile Include="Utility\SchemaCheckResult.cs" />
+    <Compile Include="Utility\ISchemaVerifier.cs" />
+    <Compile Include="Utility\SchemaVerifier.cs" />
+    <Compile Include="Utility\StartupChecks.cs" />
+    <Compile Include="Utility\HealthCheck.cs" />
     <Compile Include="Utility\GridViewExtensions.cs" />
     <Compile Include="Utility\IDashboardRepository.cs" />
     <Compile Include="Utility\ILogger.cs" />
