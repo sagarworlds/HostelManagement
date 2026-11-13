@@ -37,10 +37,18 @@
     <Compile Include="..\..\..\HostelManagement\Utility\LoginAttemptPolicy.cs" Link="Linked\LoginAttemptPolicy.cs" />
   </ItemGroup>
 
+  <!-- The web project's configuration files, for ReleaseTransformTests: the test runs the very files that get published. -->
+  <ItemGroup>
+    <Content Include="..\..\..\HostelManagement\Web.config" Link="WebConfig\Web.config" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\..\HostelManagement\Web.Release.config" Link="WebConfig\Web.Release.config" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
     <PackageReference Include="xunit" Version="2.9.2" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" PrivateAssets="all" />
+    <!-- The engine behind Web.Release.config (Visual Studio and MSBuild use the same library when publishing). -->
+    <PackageReference Include="Microsoft.Web.Xdt" Version="3.1.0" />
   </ItemGroup>
 
 </Project>
