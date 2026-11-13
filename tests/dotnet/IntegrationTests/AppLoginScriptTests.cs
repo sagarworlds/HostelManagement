@@ -21,6 +21,7 @@ namespace HostelManagement.IntegrationTests
 
         private const int LoginFailed = 18456;
         private const int CannotOpenDatabase = 4060;
+        private const int PermissionDenied = 262;
         // The same refusal has a different number before SQL Server 2022 (15118) and from it (33064).
         private static readonly int[] PasswordPolicyFailures = { 15118, 33064 };
 
@@ -133,7 +134,10 @@ namespace HostelManagement.IntegrationTests
 
             Assert.Throws<SqlException>(() => ExecuteAs(connection, "CREATE LOGIN sneaky WITH PASSWORD = 'Sneaky!Pass-Word-12ab'"));
             Assert.Throws<SqlException>(() => ExecuteAs(connection, "CREATE DATABASE sneaky"));
-            Assert.Throws<SqlException>(() => ExecuteAs(connection, "BACKUP DATABASE " + DatabaseFixture.TestDatabase + " TO DISK = N'/var/opt/mssql/data/sneaky.bak'"));
+            // Refused for lack of permission, which is the point: the backup job must run as an administrator, not as this
+            // login. (Asserting the number keeps the test from passing merely because the path is wrong on this server's OS.)
+            SqlException backup = Assert.Throws<SqlException>(() => ExecuteAs(connection, "BACKUP DATABASE " + DatabaseFixture.TestDatabase + " TO DISK = N'sneaky.bak'"));
+            Assert.Equal(PermissionDenied, backup.Number);
         }
 
         // ---- repeating the script ----

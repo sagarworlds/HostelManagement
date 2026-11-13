@@ -13,7 +13,16 @@
 */
 
 IF DB_ID(N'HMSDB') IS NULL
+BEGIN
     CREATE DATABASE HMSDB;
+
+    -- A new database starts in the FULL recovery model, where the transaction log keeps growing until the log itself is
+    -- backed up. A small installation that takes a full backup each day (Database/backup.sql) does not do that, and
+    -- would eventually fill its disk with log. SIMPLE reuses the log space on its own; the price is that a restore can
+    -- only go back to the last full backup, not to an exact moment. Switch to FULL (and schedule log backups) if you
+    -- need that. Only a database created here is changed; an existing one is left as it is.
+    ALTER DATABASE HMSDB SET RECOVERY SIMPLE;
+END
 GO
 
 USE HMSDB;
