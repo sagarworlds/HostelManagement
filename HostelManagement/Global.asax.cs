@@ -24,7 +24,8 @@ namespace HostelManagement
 
         /// <summary>
         /// Last-resort logging for exceptions no page handled, so a failure that ends in an error page
-        /// still leaves a trace in the application log.
+        /// still leaves a trace in the application log. Input that ASP.NET refused is the exception: that is
+        /// not a failure of ours, and the visitor is told what happened instead.
         /// </summary>
         protected void Application_Error(object sender, EventArgs e)
         {
@@ -32,7 +33,33 @@ namespace HostelManagement
             if (exception == null)
                 return;
 
+            if (IsRefusedInput(exception))
+            {
+                // What was typed is not logged: it is the visitor's own text and can be anything. That it happened, and
+                // where, is. A warning, not an error: nothing is wrong with the application.
+                new FileLogger().Warn("Request validation refused input sent to " + Request.Path + ".");
+                Server.ClearError();
+                Response.Redirect("~/Error.aspx?code=400", false);
+                CompleteRequest();
+                return;
+            }
+
             new FileLogger().Error("Unhandled exception for " + Request.RawUrl, exception);
+        }
+
+        /// <summary>
+        /// ASP.NET request validation throws HttpRequestValidationException for a form field, query string value or
+        /// cookie that looks like markup. Depending on where it surfaces it may be wrapped in another exception.
+        /// </summary>
+        private static bool IsRefusedInput(Exception exception)
+        {
+            for (Exception inner = exception; inner != null; inner = inner.InnerException)
+            {
+                if (inner is HttpRequestValidationException)
+                    return true;
+            }
+
+            return false;
         }
     }
 }

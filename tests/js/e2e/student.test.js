@@ -3,6 +3,7 @@ const { describe, it, before, after, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');
 const { launch, withSession, where, url, login, alertText, dismissAlert, gridRows, bodyText } = require('./support/browser');
 const db = require('./support/db');
+const { readLog } = require('./support/logs');
 
 async function fillRegistration(page, v) {
   await page.goto(url('Register.aspx'));
@@ -70,12 +71,22 @@ describe('student', () => {
         assert.equal((await db.sql('SELECT COUNT(1) AS n FROM dbo.tbl_User'))[0].n, 1);
       }));
 
-    it('does not accept HTML tags in the form (ASP.NET request validation) and stores nothing', () =>
+    it('does not accept HTML tags in the form (ASP.NET request validation), says why, and stores nothing', () =>
       withSession(browser, async ({ page }) => {
         await fillRegistration(page, { first: '<b>Bold</b>', email: 'markup@example.test' });
         const [response] = await Promise.all([page.waitForNavigation(), page.click('[id$="btnCreateAccount"]')]);
-        assert.equal(response.status(), 500, 'the request is refused');
+        assert.equal(response.status(), 400, 'refused as a bad request, not reported as a failure of the site');
+        assert.match(await page.title(), /cannot be accepted/);
+        assert.match(await bodyText(page), /text that contains HTML tags/);
+        assert.equal(await page.locator('a:has-text("Go back")').count(), 1, 'the visitor can get back to their form');
         assert.equal((await db.sql('SELECT COUNT(1) AS n FROM dbo.tbl_User'))[0].n, 1, 'no account was created');
+
+        // Logged as a warning that names the page. What was typed is not copied into the log, and nobody is told to look
+        // at an error that is not one.
+        const log = readLog();
+        assert.match(log, /\[WARN\] Request validation refused input sent to \/Register\.aspx\./);
+        assert.doesNotMatch(log, /Unhandled exception for \/Register\.aspx/);
+        assert.doesNotMatch(log, /Bold/);
       }));
   });
 

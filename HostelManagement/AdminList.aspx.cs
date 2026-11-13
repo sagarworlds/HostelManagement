@@ -46,11 +46,18 @@ namespace HostelManagement
                 return;
 
             int studentId = Convert.ToInt32(e.CommandArgument);
+
+            // Read before changing anything: a read that fails here leaves the old password in place, whereas one that
+            // failed after the reset would leave a new password that nobody was ever shown.
+            User student = _users.GetUserById(studentId);
+            string name = student == null ? "the student" : student.UserName;
+
             string temporaryPassword = TemporaryPassword.Generate();
 
             OperationResult result = _users.ResetStudentPassword(studentId, temporaryPassword);
             if (!result.Success)
             {
+                // Nothing was reset, so repeating the request (even by refreshing) is harmless.
                 ClientMessage.Show(this, result.Message);
                 return;
             }
@@ -58,11 +65,12 @@ namespace HostelManagement
             // Who reset whom is logged; the password itself is not. It is shown once, here, and stored only as a hash.
             _logger.Info("Administrator " + Convert.ToInt32(Session["UserId"]) + " reset the password of student " + studentId + ".");
 
-            User student = _users.GetUserById(studentId);
-            string name = student == null ? "the student" : student.UserName;
-            ClientMessage.Show(this,
+            // Post/Redirect/Get. Shown straight from this request, the page would send the reset again whenever the
+            // administrator refreshed it: a second temporary password, and the one just given to the student stops working.
+            ClientMessage.Flash(this,
                 "Temporary password for " + name + ": " + temporaryPassword +
                 "  -  give it to the student. They must choose a new password when they sign in. It will not be shown again.");
+            Response.Redirect("~/AdminList.aspx?UserType=" + UserType);
         }
 
         protected void gvAdmin_RowDeleting(object sender, GridViewDeleteEventArgs e)

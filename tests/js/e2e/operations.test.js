@@ -6,16 +6,11 @@ const fs = require('fs');
 const path = require('path');
 const { baseUrl, DATABASE } = require('./support/config');
 const { query } = require('./support/sql');
+const { PLANTED_OLD_LOG, logFolder, readLog } = require('./support/logs');
 
 const health = () => new URL('Health.ashx', baseUrl());
 // redirect: 'manual' so that a redirect to the login page would show up as a failure instead of being followed.
 const ask = () => fetch(health(), { redirect: 'manual' });
-
-function logFolder() {
-  const site = process.env.E2E_SITE_DIR;
-  if (!site) throw new Error('E2E_SITE_DIR is not set (tests/e2e/run.sh sets it).');
-  return path.join(site, 'App_Data', 'Logs');
-}
 
 describe('operations', () => {
   it('the health address answers Healthy to anyone, without a session, and is never cached', async () => {
@@ -44,15 +39,11 @@ describe('operations', () => {
   it('the application checked its database when it started, and deleted an old log file but not a stranger\'s file', async () => {
     // tests/e2e/run.sh planted both before the site started. The site itself starts on its first request.
     await ask();
-    const logs = logFolder();
-    const files = fs.readdirSync(logs);
-    const today = files
-      .filter(name => /^log1-\d{8}\.log$/.test(name) && name !== 'log1-20200101.log')
-      .map(name => fs.readFileSync(path.join(logs, name), 'utf8'))
-      .join('\n');
+    const files = fs.readdirSync(logFolder());
+    const today = readLog();
 
     assert.match(today, /Startup: the database has every table and column this version of the application needs\./);
-    assert.ok(!files.includes('log1-20200101.log'), 'a daily log older than the retention period is deleted');
+    assert.ok(!files.includes(PLANTED_OLD_LOG), 'a daily log older than the retention period is deleted');
     assert.match(today, /Deleted 1 log file\(s\) older than 90 days\./);
     assert.ok(files.includes('notes.txt'), 'a file that is not one of the logger\'s own is left alone');
   });

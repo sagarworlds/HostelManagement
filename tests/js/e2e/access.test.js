@@ -41,6 +41,9 @@ describe('access control', () => {
       assert.match(await page.title(), /Something went wrong/);
       const missing = await page.goto(url('Error.aspx?code=404'));
       assert.equal(missing.status(), 404);
+      const refused = await page.goto(url('Error.aspx?code=400'));
+      assert.equal(refused.status(), 400);
+      assert.match(await page.title(), /cannot be accepted/);
     }));
 
   it('a student is sent away from every administrator page', () =>
