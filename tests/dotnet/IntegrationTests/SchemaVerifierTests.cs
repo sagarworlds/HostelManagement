@@ -130,6 +130,10 @@ namespace HostelManagement.IntegrationTests
             finally
             {
                 Data.Execute("ALTER LOGIN " + login + " ENABLE;");
+                // ADO.NET's pool remembers a failed login for a few seconds and answers every later attempt with the same
+                // error, without asking the server, even though the login works again. Forgetting it here keeps this test
+                // from failing whichever test happens to run next.
+                SqlConnection.ClearAllPools();
             }
         }
     }
