@@ -30,6 +30,13 @@ trap cleanup EXIT
 
 python3 "$root/tests/e2e/stage_site.py" --out "$out" --sql-server "$HOSTELHUB_TEST_SQLSERVER"
 
+# Planted before the site starts, for tests/js/e2e/operations.test.js: an old daily log that log retention must delete, and
+# a file that is not one of the logger's own, which it must leave alone.
+export E2E_SITE_DIR="$out/site"
+mkdir -p "$E2E_SITE_DIR/App_Data/Logs"
+echo "an entry from long ago" > "$E2E_SITE_DIR/App_Data/Logs/log1-20200101.log"
+echo "not a log file" > "$E2E_SITE_DIR/App_Data/Logs/notes.txt"
+
 # The database is created before the site starts: a running site holds pooled connections that a drop would break.
 (cd "$root/tests/js" && npm ci --silent --no-audit --no-fund && node e2e/prepare-db.js)
 

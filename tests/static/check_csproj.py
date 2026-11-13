@@ -9,7 +9,7 @@ import xml.etree.ElementTree as ET
 from _common import PROJECT, finish
 
 NS = {"m": "http://schemas.microsoft.com/developer/msbuild/2003"}
-SOURCE_SUFFIXES = {".cs", ".aspx", ".ascx", ".master", ".asax", ".js", ".css"}
+SOURCE_SUFFIXES = {".cs", ".aspx", ".ascx", ".master", ".asax", ".ashx", ".js", ".css"}
 IGNORED_DIRS = {"bin", "obj", "Properties", ".vs", "packages"}
 
 

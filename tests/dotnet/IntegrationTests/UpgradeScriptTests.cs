@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.IO;
@@ -177,6 +178,24 @@ namespace HostelManagement.IntegrationTests
             Assert.True(IndexExists("IX_tbl_RequestRoom_UserId_Status"));
             Assert.True(IndexExists("IX_tbl_RequestRoom_ApprovedRoomId"));
             Assert.Equal(1, Data.Scalar<int>("SELECT COUNT(1) FROM sys.foreign_keys WHERE name = N'FK_tbl_RequestRoom_PreferredRoom';"));
+        }
+
+        [Fact]
+        public void The_schema_check_names_what_an_old_database_lacks_and_is_satisfied_after_the_upgrade()
+        {
+            CreateOldDatabase();
+            var verifier = new SchemaVerifier(Log);
+
+            IList<string> before = verifier.Verify().Problems;
+            Assert.Contains("Column dbo.tbl_User.MustChangePassword is missing.", before);
+            Assert.Contains("Column dbo.tbl_RequestRoom.PreferredRoomId is missing.", before);
+            Assert.Contains(before, problem => problem.StartsWith("Table dbo.tbl_PasswordReset is missing"));
+            Assert.Contains(before, problem => problem.StartsWith("Table dbo.tbl_Announcement is missing"));
+
+            RunUpgrade();
+
+            // The start-up check, the health page and the upgrade script then agree about what "current" means.
+            Assert.Empty(verifier.Verify().Problems);
         }
 
         [Fact]
