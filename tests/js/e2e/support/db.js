@@ -12,6 +12,21 @@ const PASSWORD_HASH = 'v2$600000$3G0rZfLrB9ux/I53j90J2g==$V49VZfWYPbzuB2fjrfkd6r
 
 const ADMIN_EMAIL = 'admin@example.com';
 
+/** Sets the text value of one "DECLARE @Name type = N'...';" line of a script, as a person does before running it. */
+function withDeclaredValue(script, variable, value) {
+  const pattern = new RegExp(`(DECLARE\\s+@${variable}\\s+[A-Za-z]+(?:\\(\\d+\\))?\\s*=\\s*N')[^']*(')`, 'g');
+  if ((script.match(pattern) || []).length !== 1) throw new Error(`Expected exactly one DECLARE @${variable} = N'...' line in the script.`);
+  return script.replace(pattern, (_, before, after) => before + value.replace(/'/g, "''") + after);
+}
+
+/** The login the site runs as (made by Database/create-app-login.sql). tests/e2e/run.sh invents the password per run. */
+function applicationLogin() {
+  const login = process.env.E2E_APP_LOGIN;
+  const password = process.env.E2E_APP_PASSWORD;
+  if (!login || !password) throw new Error('E2E_APP_LOGIN and E2E_APP_PASSWORD are not set (tests/e2e/run.sh sets them).');
+  return { login, password };
+}
+
 function retarget(script) {
   return script.replace(/\bHMSDB\b/g, DATABASE);
 }
@@ -23,7 +38,19 @@ function retarget(script) {
 async function create() {
   await query('master', `IF DB_ID(N'${DATABASE}') IS NOT NULL BEGIN ALTER DATABASE [${DATABASE}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DROP DATABASE [${DATABASE}]; END`);
   await runScript('master', retarget(fs.readFileSync(path.join(repoRoot, 'Database', 'schema.sql'), 'utf8')));
+  await createApplicationLogin();
   await addUser({ type: 'Admin', email: ADMIN_EMAIL, first: 'System', last: 'Administrator' });
+}
+
+/**
+ * The site does not run as the administrator that builds the database. It runs as the login that the repository's own
+ * script creates (db_datareader and db_datawriter only), so every page tested here also shows those privileges suffice.
+ */
+async function createApplicationLogin() {
+  const { login, password } = applicationLogin();
+  let script = fs.readFileSync(path.join(repoRoot, 'Database', 'create-app-login.sql'), 'utf8');
+  script = withDeclaredValue(withDeclaredValue(script, 'LoginName', login), 'Password', password);
+  await runScript('master', retarget(script));
 }
 
 /** Empties every table (children first) and recreates the first administrator, leaving the database itself in place. */

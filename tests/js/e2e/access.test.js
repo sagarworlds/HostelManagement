@@ -152,6 +152,15 @@ describe('access control', () => {
       assert.match(await page.innerText('body'), /invalid or has expired/i);
     }));
 
+  it('the site talks to the database as the least-privilege application login, not as the administrator', () =>
+    withSession(browser, async ({ page }) => {
+      await login(page, db.ADMIN_EMAIL, db.PASSWORD);   // the site has now opened (and pooled) its own connections
+      const sessions = await db.sql(
+        'SELECT DISTINCT login_name FROM sys.dm_exec_sessions WHERE is_user_process = 1 AND database_id = DB_ID(@name)',
+        { name: 'HMSDB_E2E' });
+      assert.ok(sessions.map(s => s.login_name).includes(process.env.E2E_APP_LOGIN), 'the site is connected as ' + process.env.E2E_APP_LOGIN);
+    }));
+
   it('no page asks the browser for anything outside the site except the known libraries', () =>
     withSession(browser, async s => {
       await login(s.page, db.ADMIN_EMAIL, db.PASSWORD);

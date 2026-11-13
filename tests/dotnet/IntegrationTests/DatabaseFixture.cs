@@ -14,13 +14,24 @@ namespace HostelManagement.IntegrationTests
     /// <remarks>
     /// The only database this class ever creates or drops is <see cref="TestDatabase"/>; a real HMSDB on the same
     /// server is never touched. Use a throw-away server anyway (tests/start-sql-server.sh starts one with Docker).
+    /// <para>
+    /// The repositories under test do not run as the administrator that builds the database. They run as the login that
+    /// Database/create-app-login.sql creates (only db_datareader and db_datawriter), which is what the deployment guide
+    /// tells people to use: every test in this project therefore also shows that those privileges are enough.
+    /// </para>
     /// </remarks>
     public sealed class DatabaseFixture : IDisposable
     {
         public const string ServerVariable = "HOSTELHUB_TEST_SQLSERVER";
         public const string TestDatabase = "HMSDB_IntegrationTest";
 
+        /// <summary>The login the repositories run as; made by Database/create-app-login.sql and dropped again at the end.</summary>
+        public const string ApplicationLogin = "hostelhub_app_itest";
+
         private readonly string _configFile;
+
+        // Different on every run, and complex enough for SQL Server's password policy.
+        private readonly string _applicationPassword = "Aa1!" + Guid.NewGuid().ToString("N");
 
         public DatabaseFixture()
         {
@@ -35,10 +46,13 @@ namespace HostelManagement.IntegrationTests
             ServerConnectionString = builder.ConnectionString;
             builder.InitialCatalog = TestDatabase;
             DatabaseConnectionString = builder.ConnectionString;
+            builder.UserID = ApplicationLogin;
+            builder.Password = _applicationPassword;
+            ApplicationConnectionString = builder.ConnectionString;
 
             Rebuild(ReadDatabaseScript("schema.sql"));
 
-            _configFile = WriteApplicationConfig(DatabaseConnectionString);
+            _configFile = WriteApplicationConfig(ApplicationConnectionString);
             // Must happen before anything reads ConfigurationManager (Config.MCQBConnectionString does, on first use).
             AppContext.SetData("APP_CONFIG_FILE", _configFile);
 
@@ -48,8 +62,11 @@ namespace HostelManagement.IntegrationTests
         /// <summary>Connection string for the server's master database, used to create and drop the test database.</summary>
         public string ServerConnectionString { get; private set; }
 
-        /// <summary>Connection string for the test database; also what the application's Config reads.</summary>
+        /// <summary>Connection string for the test database as the administrator: for scripts and for arranging data.</summary>
         public string DatabaseConnectionString { get; private set; }
+
+        /// <summary>Connection string for the test database as the application's own login; what Config reads.</summary>
+        public string ApplicationConnectionString { get; private set; }
 
         /// <summary>Direct SQL for arranging and checking data, independent of the repositories under test.</summary>
         public TestData Data { get; private set; }
@@ -69,6 +86,17 @@ namespace HostelManagement.IntegrationTests
         {
             DropTestDatabase();
             SqlScript.Run(ServerConnectionString, SqlScript.Retarget(script, TestDatabase));
+            // A new database has no user for the application's login yet (the login itself outlives the database).
+            SqlScript.Run(ServerConnectionString, ApplicationLoginScript(ApplicationLogin, _applicationPassword));
+        }
+
+        /// <summary>Database/create-app-login.sql with its settings filled in, aimed at the test database.</summary>
+        public static string ApplicationLoginScript(string login, string password)
+        {
+            string script = ReadDatabaseScript("create-app-login.sql");
+            script = SqlScript.WithDeclaredValue(script, "LoginName", login);
+            script = SqlScript.WithDeclaredValue(script, "Password", password);
+            return SqlScript.Retarget(script, TestDatabase);
         }
 
         /// <summary>Back to a fresh database built by schema.sql.</summary>
@@ -88,6 +116,7 @@ namespace HostelManagement.IntegrationTests
         public void Dispose()
         {
             DropTestDatabase();
+            DropLogin(ApplicationLogin);
             if (_configFile != null && File.Exists(_configFile))
                 File.Delete(_configFile);
         }
@@ -100,6 +129,13 @@ namespace HostelManagement.IntegrationTests
                 "IF DB_ID(N'" + TestDatabase + "') IS NOT NULL\r\nBEGIN\r\n" +
                 "    ALTER DATABASE [" + TestDatabase + "] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;\r\n" +
                 "    DROP DATABASE [" + TestDatabase + "];\r\nEND");
+        }
+
+        /// <summary>Removes a server-level login; the database it was a user of must already be gone.</summary>
+        public void DropLogin(string login)
+        {
+            SqlScript.Run(ServerConnectionString,
+                "IF EXISTS (SELECT 1 FROM sys.server_principals WHERE name = N'" + login + "')\r\n    DROP LOGIN [" + login + "];");
         }
 
         private static string WriteApplicationConfig(string connectionString)

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
@@ -23,6 +24,20 @@ namespace HostelManagement.IntegrationTests
                 if (!string.IsNullOrWhiteSpace(batch))
                     yield return batch;
             }
+        }
+
+        /// <summary>
+        /// Sets the text value of one "DECLARE @Name type = N'...';" line, the way a person edits a script's settings
+        /// before running it. Insists on exactly one such line, so a script that changed shape cannot be half-edited.
+        /// </summary>
+        public static string WithDeclaredValue(string script, string variable, string value)
+        {
+            var declaration = new Regex(@"(DECLARE\s+@" + Regex.Escape(variable) + @"\s+[A-Za-z]+(?:\(\d+\))?\s*=\s*N')[^']*(')");
+            if (declaration.Matches(script).Count != 1)
+                throw new InvalidOperationException("Expected exactly one DECLARE @" + variable + " = N'...' line in the script.");
+
+            // A quote inside the value is doubled, as T-SQL requires inside a string literal.
+            return declaration.Replace(script, match => match.Groups[1].Value + value.Replace("'", "''") + match.Groups[2].Value);
         }
 
         /// <summary>Points a script at the disposable test database instead of HMSDB.</summary>
